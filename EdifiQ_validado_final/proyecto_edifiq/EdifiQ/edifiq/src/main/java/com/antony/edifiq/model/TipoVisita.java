@@ -1,0 +1,20 @@
+package com.antony.edifiq.model;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+
+@Entity
+@Table(name="tipo_visita")
+public class TipoVisita {
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="id_tipo_visita") private Long id;
+
+    @NotBlank(message="El nombre es obligatorio")
+    @Size(min=2,max=50,message="El nombre debe tener entre 2 y 50 caracteres")
+    @Pattern(regexp="^[\\p{L}\\p{N}]+(?:[ \\-][\\p{L}\\p{N}]+)*$",message="El nombre solo puede contener letras, números, espacios y guiones")
+    private String nombre;
+
+    public Long getId(){return id;} public void setId(Long v){id=v;}
+    public String getNombre(){return nombre;} public void setNombre(String v){nombre=v;}
+    
+}
