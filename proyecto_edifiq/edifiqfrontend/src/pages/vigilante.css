@@ -1,0 +1,226 @@
+.crud-container {
+	width: 100%;
+	max-width: 1280px;
+	min-height: auto;
+	margin: 0 auto;
+	padding: 0;
+	color: #172033;
+}
+
+.crud-title {
+	margin: 0 0 24px;
+	color: #111827;
+	font-size: clamp(1.7rem, 3vw, 2.15rem);
+	font-weight: 800;
+	letter-spacing: -0.03em;
+}
+
+.crud-form {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+	align-items: center;
+	margin-bottom: 28px;
+	padding: 24px;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.crud-form select,
+.crud-form input:not([type="checkbox"]) {
+	width: 100%;
+	min-height: 46px;
+	padding: 0 13px;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #f8fafc;
+	color: #172033;
+	font: inherit;
+	font-size: 0.9rem;
+	outline: none;
+	transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.crud-form select {
+	appearance: none;
+	cursor: pointer;
+	background-image: linear-gradient(45deg, transparent 50%, #64748b 50%),
+		linear-gradient(135deg, #64748b 50%, transparent 50%);
+	background-position: calc(100% - 17px) center, calc(100% - 12px) center;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+}
+
+.crud-form input::placeholder {
+	color: #94a3b8;
+}
+
+.crud-form select:hover,
+.crud-form input:not([type="checkbox"]):hover {
+	border-color: #94a3b8;
+}
+
+.crud-form select:focus,
+.crud-form input:not([type="checkbox"]):focus {
+	border-color: #2563eb;
+	background: #ffffff;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.crud-checkbox {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	min-height: 46px;
+	color: #475569;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.crud-checkbox input {
+	width: 17px;
+	height: 17px;
+	accent-color: #2563eb;
+	cursor: pointer;
+}
+
+.crud-form button {
+	min-height: 46px;
+	padding: 0 18px;
+	border: 0;
+	border-radius: 8px;
+	background: #2563eb;
+	color: #ffffff;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.9rem;
+	font-weight: 700;
+	transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.crud-form button:hover {
+	background: #1d4ed8;
+	box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+	transform: translateY(-1px);
+}
+
+.crud-form button:focus-visible,
+.btn-edit:focus-visible,
+.btn-delete:focus-visible {
+	outline: 3px solid #93c5fd;
+	outline-offset: 2px;
+}
+
+.crud-table {
+	width: 100%;
+	min-width: 1080px;
+	border-collapse: separate;
+	border-spacing: 0;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	background: #ffffff;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+	overflow: hidden;
+}
+
+.crud-table th,
+.crud-table td {
+	padding: 15px 16px;
+	border-bottom: 1px solid #eef2f7;
+	text-align: left;
+}
+
+.crud-table th {
+	background: #f8fafc;
+	color: #475569;
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.crud-table th:first-child {
+	border-top-left-radius: 14px;
+}
+
+.crud-table th:last-child {
+	border-top-right-radius: 14px;
+}
+
+.crud-table td {
+	color: #334155;
+	font-size: 0.88rem;
+	white-space: nowrap;
+}
+
+.crud-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.crud-table tbody tr:hover td {
+	background: #f8fbff;
+}
+
+.crud-empty {
+	padding: 34px !important;
+	color: #64748b !important;
+	text-align: center !important;
+}
+
+.btn-edit,
+.btn-delete {
+	padding: 8px 11px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.78rem;
+	font-weight: 700;
+	transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.btn-edit {
+	margin-right: 8px;
+	border-color: #bfdbfe;
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+.btn-edit:hover {
+	background: #dbeafe;
+}
+
+.btn-delete {
+	border-color: #fecaca;
+	background: #fef2f2;
+	color: #b91c1c;
+}
+
+.btn-delete:hover {
+	background: #fee2e2;
+}
+
+@media (max-width: 900px) {
+	.crud-form {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 560px) {
+	.crud-title {
+		margin-bottom: 18px;
+	}
+
+	.crud-form {
+		grid-template-columns: 1fr;
+		gap: 12px;
+		padding: 18px;
+	}
+
+	.crud-checkbox {
+		justify-content: flex-start;
+	}
+}

@@ -7,7 +7,7 @@ import VigilanteVisitasPage from "./pages/Vigilante/VisitasPage";
 import VigilantePaquetesPage from "./pages/Vigilante/PaquetesPage";
 import LandingPage from "./pages/LadingPages";
 import HomePage from "./pages/Admin/AdminHomePages";
-import PersonasPage from "./pages/PersonaPages";
+import PersonasPage from "./pages/Admin/PersonaPages";
 import RegistroResidente from "./pages/RegistroResidente";
 import LoginPage from "./pages/LoginPage";
 
@@ -32,6 +32,7 @@ import VigilanteSidebar from "./componentes/VigilanteSidebar";
 import VigilanteHomePage from "./pages/Vigilante/VigilanteHomePage";
 
 import "./App.css";
+import "./componentes/sidebar.css";
 
 /* =========================================
 LAYOUT ADMINISTRADOR

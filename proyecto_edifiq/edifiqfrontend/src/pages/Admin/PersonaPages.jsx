@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getPersonas, crearPersona, actualizarPersona, eliminarPersona, getTiposDocumento } from "../api";
-import "../App.css";
+import { getPersonas, crearPersona, actualizarPersona, eliminarPersona, getTiposDocumento } from "../../api";
+import "../vigilante.css";
 
-const initialForm = {
+const initialForm = { 
   idTipoDocumento: "",
   numeroDocumento: "",
   nombres: "",
