@@ -56,7 +56,7 @@ function LandingPage() {
 
               <div className="hero-actions">
                 <Link to="/login" className="primary-button">
-                  Iniciar sesión <span></span>
+                  Solicitar demo <span>→</span>
                 </Link>
                 <a href="#funcionalidades" className="secondary-button">
                   Ver funcionalidades
@@ -72,7 +72,7 @@ function LandingPage() {
                   <div className="dashboard-brand">
                     <div className="dashboard-logo">Q</div>
                     <div>
-                      <strong>EdifiQ</strong>
+                      <strong>Conjunto Los Alcázares</strong>
                       <small>Panel de administración</small>
                     </div>
                   </div>
@@ -82,27 +82,30 @@ function LandingPage() {
                 <div className="dashboard-body">
 
                   <div className="dashboard-stat-row">
-                    <span className="dashboard-stat-icon"></span>
+                    <span className="dashboard-stat-icon">🏠</span>
                     <div>
-                      <strong>Residentes</strong>
+                      <strong>Residentes activos</strong>
                       <small>Apartamentos registrados</small>
                     </div>
+                    <span className="dashboard-stat-value">128</span>
                   </div>
 
                   <div className="dashboard-stat-row">
-                        <span className="dashboard-stat-icon"></span>
+                    <span className="dashboard-stat-icon">📦</span>
                     <div>
-                      <strong>Paquetes</strong>
-                      <small>Gestion de paquetería</small>
+                      <strong>Paquetes pendientes</strong>
+                      <small>Por entregar hoy</small>
                     </div>
+                    <span className="dashboard-stat-value">7</span>
                   </div>
 
                   <div className="dashboard-stat-row">
-                    <span className="dashboard-stat-icon"></span>
+                    <span className="dashboard-stat-icon">📅</span>
                     <div>
-                      <strong>Reservas</strong>
-                      <small>Salón social y mas</small>
+                      <strong>Reservas de hoy</strong>
+                      <small>Salón social y BBQ</small>
                     </div>
+                    <span className="dashboard-stat-value">3</span>
                   </div>
 
                 </div>
@@ -267,7 +270,8 @@ function LandingPage() {
                 <div className="benefits-card-header">
                   <div className="big-q">Q</div>
                   <div>
-                    <strong>EdifiQ</strong>
+                    <strong>Resumen mensual</strong>
+                    <small>Agosto 2026</small>
                   </div>
                 </div>
 
@@ -278,20 +282,25 @@ function LandingPage() {
                 </div>
 
                 <div className="benefits-card-footer">
-                  <span>● </span>
+                  <span>● Al día</span>
+                  <strong>128 apartamentos</strong>
                 </div>
 
               </div>
 
               <div className="floating-card floating-card-one">
+                <span>📦</span>
                 <div>
                   <strong>Paquete entregado</strong>
+                  <small>Apto 302 · hace 2 min</small>
                 </div>
               </div>
 
               <div className="floating-card floating-card-two">
+                <span>✅</span>
                 <div>
                   <strong>Visita registrada</strong>
+                  <small>Torre 3 · hace 5 min</small>
                 </div>
               </div>
 
@@ -304,10 +313,18 @@ function LandingPage() {
         <section className="final-section">
           <div className="final-content">
 
+            <span>EMPIEZA HOY</span>
 
-            <h2>¿Listo para empezar?</h2>
+            <h2>¿Listo para organizar tu conjunto?</h2>
+
+            <p>
+              Únete a los administradores que ya gestionan sus
+              conjuntos residenciales con EdifiQ, de forma simple
+              y centralizada.
+            </p>
+
             <Link to="/login" className="final-button">
-              Iniciar sesión 
+              Solicitar acceso <span>→</span>
             </Link>
 
           </div>

@@ -158,7 +158,7 @@ export default function RegistroResidente() {
                 </option>
               ))}
             </select>
-                <br />
+
             <input
               name="numeroDocumento"
               inputMode="numeric"

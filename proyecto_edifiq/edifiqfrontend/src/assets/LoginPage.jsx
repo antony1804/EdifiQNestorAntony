@@ -55,7 +55,16 @@ function LoginPage() {
             organizados y accesibles desde cualquier rol.
           </p>
         </div>
+
         <div className="auth-brand-stats">
+          <div>
+            <strong>128</strong>
+            <small>Apartamentos activos</small>
+          </div>
+          <div>
+            <strong>3</strong>
+            <small>Roles gestionados</small>
+          </div>
         </div>
 
       </div>
