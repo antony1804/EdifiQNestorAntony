@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
 import { paquetesApi, apartamentosApi, entregarPaquete } from "../../api";
+import { onlyLetters } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -185,10 +186,9 @@ export default function VigilantePaquetesPage() {
 								<input
 									required
 									maxLength="100"
+									pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
 									value={form.remitente}
-									onChange={(e) =>
-										setForm({ ...form, remitente: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, remitente: onlyLetters(e.target.value) })}
 								/>
 							</div>
 

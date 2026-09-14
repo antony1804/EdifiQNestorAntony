@@ -2,21 +2,23 @@ const BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/api
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
   });
 
   const text = await response.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
 
   if (!response.ok) {
-    const message =
-      typeof data === "object" && data?.error
-        ? data.error
-        : typeof data === "object"
-          ? Object.values(data || {})[0] || "No se pudo completar la operación"
-          : data || "No se pudo completar la operación";
+    let message = data || "No se pudo completar la operación";
+    if (typeof data === "object") {
+      message = data?.error || Object.values(data || {})[0] || message;
+    }
     throw new Error(message);
   }
   return data;
@@ -85,4 +87,33 @@ export const finalizarVisita = (id) =>
 export const getApartamentoDePersona = async (idPersona) => {
   const data = await request(`${BASE_URL}/apartamentos-personas/persona/${idPersona}`);
   return data.find((a) => !a.fechaSalida) || data[0] || null;
+};
+
+export const getPersonasDeApartamento = (idApartamento) =>
+  request(`${BASE_URL}/apartamentos-personas/apartamento/${idApartamento}`);
+
+export const eliminarFamiliar = (idApartamento, idPersona) =>
+  request(`${BASE_URL}/apartamentos-personas/${idApartamento}/${idPersona}`, {
+    method: "DELETE",
+  });
+
+export const registrarFamiliar = async ({ persona, idApartamento, idTipoResidente }) => {
+  let personaCreada;
+  try {
+    personaCreada = await crearPersona(persona);
+  } catch (e) {
+    // Si el documento ya existe, reutilizamos la persona existente en vez de fallar
+    if (String(e.message).toLowerCase().includes("ya está registrado")) {
+      personaCreada = await getPersonaPorDocumento(persona.numeroDocumento);
+    } else {
+      throw e;
+    }
+  }
+
+  return asignacionesApi.create({
+    apartamento: { id: idApartamento },
+    persona: { id: personaCreada.id },
+    tipoResidente: { id: idTipoResidente },
+    fechaIngreso: new Date().toISOString().slice(0, 10),
+  });
 };

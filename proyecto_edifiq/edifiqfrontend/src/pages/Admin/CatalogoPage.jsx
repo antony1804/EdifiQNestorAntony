@@ -1,6 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import { lettersPattern, onlyLetters, onlyNumbers, numbersPattern } from "../../utils/validation";
 import "../../styles/modules.css";
+
+const getFieldValue = (field, value) => {
+    if (field.type === "number") return onlyNumbers(value);
+    if (field.type === "letters") return onlyLetters(value);
+    return value;
+};
+
+const getFieldPattern = (field) => {
+    if (field.type === "number") return numbersPattern;
+    if (field.type === "letters") return lettersPattern;
+    return undefined;
+};
 
 export default function CatalogoPage({ title, subtitle, api, fields }) {
     const initial = Object.fromEntries(fields.map((f) => [f.name, ""]));
@@ -10,12 +23,12 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState("");
 
-    const load = () => api.list().then(setItems).catch((e) => setError(e.message));
+    const load = useCallback(() => api.list().then(setItems).catch((e) => setError(e.message)), [api]);
 
     // Corrección del useEffect
     useEffect(() => {
         load();
-    }, []);
+    }, [load]);
 
     const submit = async (e) => {
         e.preventDefault();
@@ -139,18 +152,21 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
                                     ) : (
                                         <input
                                             required
+                                            type="text"
                                             maxLength={f.maxLength}
+                                            inputMode={f.type === "number" ? "numeric" : undefined}
+                                            pattern={getFieldPattern(f)}
                                             value={form[f.name]}
-                                            onChange={(e) =>
-                                                setForm({ ...form, [f.name]: e.target.value })
-                                            }
+                                            onChange={(e) => {
+                                                setForm({ ...form, [f.name]: getFieldValue(f, e.target.value) });
+                                            }}
                                         />
                                     )}
                                 </div>
                             ))}
                         </div>
                         <div className="form-footer">
-                            <button className="primary-btn">Guardar</button>
+                            <button type="submit" className="primary-btn">Guardar</button>
                         </div>
                     </form>
                 </Modal>

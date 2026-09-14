@@ -7,6 +7,7 @@ import {
 	getEstadosRecibo,
 	pagarRecibo,
 } from "../../api";
+import { onlyDecimal } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -281,7 +282,7 @@ export default function RecibosPage() {
 									min="0.01"
 									step="0.01"
 									value={form.valor}
-									onChange={(e) => setForm({ ...form, valor: e.target.value })}
+									onChange={(e) => setForm({ ...form, valor: onlyDecimal(e.target.value) })}
 								/>
 							</div>
 

@@ -7,11 +7,13 @@
 
 	position: sticky;
 	top: 0;
+	align-self: stretch;
 	display: flex;
 	flex-direction: column;
 	width: 280px;
 	min-width: 280px;
-	height: 100vh;
+	height: auto;
+	min-height: 100vh;
 	padding: 28px 18px 20px;
 	overflow-y: auto;
 	background: var(--sidebar-bg);
@@ -49,6 +51,8 @@
 }
 
 .admin-sidebar-link {
+	--sidebar-icon-filter: brightness(0) saturate(100%) invert(83%) sepia(9%) saturate(378%) hue-rotate(182deg) brightness(93%) contrast(89%);
+
 	display: flex;
 	align-items: center;
 	min-height: 44px;
@@ -62,12 +66,34 @@
 	transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
+.admin-sidebar-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 24px;
+	margin-right: 10px;
+	line-height: 1;
+}
+
+.admin-sidebar-icon img {
+	display: block;
+	width: 22px;
+	height: 22px;
+	object-fit: contain;
+	filter: var(--sidebar-icon-filter);
+	transition: filter 160ms ease;
+}
+
 .admin-sidebar-link:hover {
+	--sidebar-icon-filter: brightness(0) saturate(100%) invert(1);
+
 	background: var(--sidebar-surface);
 	color: #ffffff;
 }
 
 .admin-sidebar-link.active {
+	--sidebar-icon-filter: brightness(0) saturate(100%) invert(1);
+
 	background: #1d4ed8;
 	border-left-color: var(--sidebar-accent);
 	color: #ffffff;
@@ -75,6 +101,10 @@
 }
 
 .logout-btn {
+	--sidebar-icon-filter: brightness(0) saturate(100%) invert(83%) sepia(9%) saturate(378%) hue-rotate(182deg) brightness(93%) contrast(89%);
+
+	display: flex;
+	align-items: center;
 	width: 100%;
 	min-height: 44px;
 	margin-top: 24px;
@@ -91,6 +121,8 @@
 }
 
 .logout-btn:hover {
+	--sidebar-icon-filter: brightness(0) saturate(100%) invert(1);
+
 	border-color: #ef4444;
 	background: #7f1d1d;
 	color: #ffffff;

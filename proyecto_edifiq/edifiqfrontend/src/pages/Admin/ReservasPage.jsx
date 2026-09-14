@@ -7,6 +7,7 @@ import {
 	getEstadosReserva,
 	cancelarReserva,
 } from "../../api";
+import { onlyNumbers } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -283,9 +284,7 @@ export default function ReservasPage() {
 									type="number"
 									min="0"
 									value={form.cantidadInvitados}
-									onChange={(e) =>
-										setForm({ ...form, cantidadInvitados: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, cantidadInvitados: onlyNumbers(e.target.value) })}
 								/>
 							</div>
 

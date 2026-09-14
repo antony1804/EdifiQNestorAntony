@@ -7,6 +7,7 @@ import {
 	getTiposDocumento,
 	finalizarVisita,
 } from "../../api";
+import { onlyLetters, onlyNumbers } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -114,13 +115,14 @@ export default function VigilanteVisitasPage() {
 			<div className="card-panel">
 				<div className="toolbar">
 					<strong>{filtered.length} visitas</strong>
-					<label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+					<label htmlFor="vigilante-solo-activas" style={{ display: "flex", alignItems: "center", gap: 6 }}>
 						<input
+							id="vigilante-solo-activas"
 							type="checkbox"
 							checked={soloActivas}
 							onChange={(e) => setSoloActivas(e.target.checked)}
 						/>
-						Solo activas
+						<span>Solo activas</span>
 					</label>
 					<input
 						className="search-input"
@@ -197,8 +199,9 @@ export default function VigilanteVisitasPage() {
 						{error && <div className="form-error">{error}</div>}
 						<div className="form-grid">
 							<div className="form-group">
-								<label>Tipo de visita</label>
+								<label htmlFor="vigilante-visita-tipo">Tipo de visita</label>
 								<select
+									id="vigilante-visita-tipo"
 									required
 									value={form.tipoVisitaId}
 									onChange={(e) =>
@@ -215,8 +218,9 @@ export default function VigilanteVisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Apartamento a visitar</label>
+								<label htmlFor="vigilante-visita-apartamento">Apartamento a visitar</label>
 								<select
+									id="vigilante-visita-apartamento"
 									required
 									value={form.apartamentoId}
 									onChange={(e) =>
@@ -233,8 +237,9 @@ export default function VigilanteVisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Tipo de documento</label>
+								<label htmlFor="vigilante-visita-documento-tipo">Tipo de documento</label>
 								<select
+									id="vigilante-visita-documento-tipo"
 									required
 									value={form.tipoDocumentoId}
 									onChange={(e) =>
@@ -251,32 +256,34 @@ export default function VigilanteVisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Documento</label>
+								<label htmlFor="vigilante-visita-documento">Documento</label>
 								<input
+									id="vigilante-visita-documento"
 									required
 									maxLength="30"
+									inputMode="numeric"
+									pattern="[0-9]+"
 									value={form.documentoVisitante}
-									onChange={(e) =>
-										setForm({ ...form, documentoVisitante: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, documentoVisitante: onlyNumbers(e.target.value) })}
 								/>
 							</div>
 
 							<div className="form-group">
-								<label>Nombre completo</label>
+								<label htmlFor="vigilante-visita-nombre">Nombre completo</label>
 								<input
+									id="vigilante-visita-nombre"
 									required
 									maxLength="100"
+									pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
 									value={form.nombreVisitante}
-									onChange={(e) =>
-										setForm({ ...form, nombreVisitante: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, nombreVisitante: onlyLetters(e.target.value) })}
 								/>
 							</div>
 
 							<div className="form-group">
-								<label>Motivo</label>
+								<label htmlFor="vigilante-visita-motivo">Motivo</label>
 								<input
+									id="vigilante-visita-motivo"
 									maxLength="150"
 									value={form.motivoVisita}
 									onChange={(e) =>
@@ -287,7 +294,7 @@ export default function VigilanteVisitasPage() {
 						</div>
 
 						<div className="form-footer">
-							<button className="primary-btn">Registrar ingreso</button>
+							<button type="submit" className="primary-btn">Registrar ingreso</button>
 						</div>
 					</form>
 				</Modal>

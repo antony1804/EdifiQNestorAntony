@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Modal from "../../componentes/Modal";
 import {
 	asignacionesApi,
 	apartamentosApi,
@@ -21,6 +22,7 @@ export default function AsignacionesPage() {
 	const [tipos, setTipos] = useState([]);
 	const [form, setForm] = useState(initial);
 	const [error, setError] = useState("");
+	const [showModal, setShowModal] = useState(false);
 
 	const load = () =>
 		asignacionesApi.list().then(setItems).catch((e) => setError(e.message));
@@ -45,10 +47,23 @@ export default function AsignacionesPage() {
 				fechaSalida: form.fechaSalida || null,
 			});
 			setForm(initial);
+			setShowModal(false);
 			load();
 		} catch (e) {
 			setError(e.message);
 		}
+	};
+
+	const abrirModal = () => {
+		setForm({ ...initial, fechaIngreso: new Date().toISOString().slice(0, 10) });
+		setError("");
+		setShowModal(true);
+	};
+
+	const cerrarModal = () => {
+		setShowModal(false);
+		setForm(initial);
+		setError("");
 	};
 
 	const remove = async (x) => {
@@ -73,14 +88,20 @@ export default function AsignacionesPage() {
 						Relaciona personas con su apartamento y tipo de residencia.
 					</p>
 				</div>
+				<button className="primary-btn" onClick={abrirModal}>
+					+ Nueva asignación
+				</button>
 			</div>
 
-			<div className="card-panel">
-				<form onSubmit={submit}>
+			{showModal && (
+				<Modal title="Nueva asignación" onClose={cerrarModal}>
+					<form onSubmit={submit}>
+						{error && <div className="form-error">{error}</div>}
 					<div className="form-grid">
 						<div className="form-group">
-							<label>Apartamento</label>
+							<label htmlFor="asignacion-apartamento">Apartamento</label>
 							<select
+								id="asignacion-apartamento"
 								required
 								value={form.apartamentoId}
 								onChange={(e) =>
@@ -97,8 +118,9 @@ export default function AsignacionesPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Persona</label>
+							<label htmlFor="asignacion-persona">Persona</label>
 							<select
+								id="asignacion-persona"
 								required
 								value={form.personaId}
 								onChange={(e) => setForm({ ...form, personaId: e.target.value })}
@@ -113,8 +135,9 @@ export default function AsignacionesPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Tipo de residente</label>
+							<label htmlFor="asignacion-tipo">Tipo de residente</label>
 							<select
+								id="asignacion-tipo"
 								required
 								value={form.tipoResidenteId}
 								onChange={(e) =>
@@ -131,8 +154,9 @@ export default function AsignacionesPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Fecha de ingreso</label>
+							<label htmlFor="asignacion-ingreso">Fecha de ingreso</label>
 							<input
+								id="asignacion-ingreso"
 								required
 								type="date"
 								value={form.fechaIngreso}
@@ -143,8 +167,9 @@ export default function AsignacionesPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Fecha de salida (opcional)</label>
+							<label htmlFor="asignacion-salida">Fecha de salida (opcional)</label>
 							<input
+								id="asignacion-salida"
 								type="date"
 								min={form.fechaIngreso}
 								value={form.fechaSalida}
@@ -153,13 +178,15 @@ export default function AsignacionesPage() {
 						</div>
 					</div>
 
-					{error && <div className="form-error">{error}</div>}
-
 					<div className="form-footer">
-						<button className="primary-btn">Asignar residente</button>
+						<button type="button" className="secondary-btn" onClick={cerrarModal}>
+							Cancelar
+						</button>
+						<button type="submit" className="primary-btn">Asignar residente</button>
 					</div>
-				</form>
-			</div>
+					</form>
+				</Modal>
+			)}
 
 			<div className="card-panel" style={{ marginTop: 20 }}>
 				<div className="table-wrap">

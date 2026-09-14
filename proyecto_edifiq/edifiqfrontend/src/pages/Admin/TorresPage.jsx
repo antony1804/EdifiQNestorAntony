@@ -7,7 +7,7 @@ export default function TorresPage() {
 			title="Torres"
 			subtitle="Administra las torres del conjunto."
 			api={torresApi}
-			fields={[{ name: "nombreTorre", label: "Nombre de la torre", maxLength: 20 }]}
+			fields={[{ name: "nombreTorre", label: "Nombre de la torre", type: "letters", maxLength: 20 }]}
 		/>
 	);
 }

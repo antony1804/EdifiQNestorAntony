@@ -11,7 +11,7 @@ import PersonasPage from "./pages/Admin/PersonaPages";
 import RegistroResidente from "./pages/RegistroResidente";
 import LoginPage from "./pages/LoginPage";
 
-import ApartamentosPage from "./pages/Admin/ApartamentosPage";
+import ApartamentosPage from "./pages/Admin/ApartamentosPage_Admin";
 import TorresPage from "./pages/Admin/TorresPage";
 import PaquetesAdminPage from "./pages/Admin/PaquetesPage";
 import RecibosAdminPage from "./pages/Admin/RecibosPage";
@@ -27,12 +27,15 @@ import ResidenteRecibos from "./pages/Residente/RecibosPage";
 import ResidenteReservas from "./pages/Residente/ReservasPage";
 import ResidenteVisitas from "./pages/Residente/VisitasPage";
 import ApartamentoPage from "./pages/Residente/ApartamentoPage";
+import FamiliaresPage from "./pages/Residente/FamiliaresPage";
+import SidebarResidente from "./pages/Residente/SidebarResidente";
 
 import VigilanteSidebar from "./componentes/VigilanteSidebar";
 import VigilanteHomePage from "./pages/Vigilante/VigilanteHomePage";
 
 import "./App.css";
 import "./componentes/sidebar.css";
+import "./pages/Residente/SidebarResidente.css";
 
 /* =========================================
 LAYOUT ADMINISTRADOR
@@ -68,6 +71,19 @@ return ( <div className="admin-layout"> <VigilanteSidebar />
 );
 }
 
+function ResidentLayout({ children }) {
+return ( <div className="admin-layout"> <SidebarResidente />
+
+
+  <main className="admin-content">
+    {children}
+  </main>
+</div>
+
+
+);
+}
+
 /* =========================================
 RUTAS PROTEGIDAS
 ========================================= */
@@ -79,8 +95,8 @@ return ( <ProtectedRoute> <RoleRoute role="Administrador"> <AdminLayout>
 }
 
 function ResidentRoute({ children }) {
-return ( <ProtectedRoute> <RoleRoute role="Residente">
-{children} </RoleRoute> </ProtectedRoute>
+return ( <ProtectedRoute> <RoleRoute role="Residente"> <ResidentLayout>
+{children} </ResidentLayout> </RoleRoute> </ProtectedRoute>
 );
 }
 
@@ -273,6 +289,15 @@ return ( <BrowserRouter>
       element={
         <ResidentRoute>
           <ApartamentoPage />
+        </ResidentRoute>
+      }
+    />
+
+    <Route
+      path="/residente/familiares"
+      element={
+        <ResidentRoute>
+          <FamiliaresPage />
         </ResidentRoute>
       }
     />

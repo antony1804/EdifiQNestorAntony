@@ -8,7 +8,7 @@ export default function ZonasPage() {
 			subtitle="Administra espacios disponibles para reservas."
 			api={zonasApi}
 			fields={[
-				{ name: "nombre", label: "Nombre", maxLength: 50 },
+				{ name: "nombre", label: "Nombre", type: "letters", maxLength: 50 },
 				{
 					name: "descripcion",
 					label: "Descripción",

@@ -6,6 +6,7 @@ import {
 	getEstadosPaquete,
 	entregarPaquete,
 } from "../../api";
+import { onlyLetters } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -233,10 +234,9 @@ export default function PaquetesPage() {
 								<input
 									required
 									maxLength="100"
+									pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
 									value={form.remitente}
-									onChange={(e) =>
-										setForm({ ...form, remitente: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, remitente: onlyLetters(e.target.value) })}
 								/>
 							</div>
 

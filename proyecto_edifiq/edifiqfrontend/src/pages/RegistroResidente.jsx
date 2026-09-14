@@ -1,6 +1,7 @@
 import "../Registro.css";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { onlyLetters, onlyNumbers } from "../utils/validation";
 import {
   crearPersona,
   getPersonaPorDocumento,
@@ -37,8 +38,15 @@ export default function RegistroResidente() {
       );
   }, []);
 
-  const handlePersonaChange = (e) =>
-    setPersona({ ...persona, [e.target.name]: e.target.value });
+  const handlePersonaChange = (e) => {
+    const { name, value } = e.target;
+    const cleanValue = name === "nombres" || name === "apellidos"
+      ? onlyLetters(value)
+      : name === "numeroDocumento" || name === "telefono"
+        ? onlyNumbers(value)
+        : value;
+    setPersona({ ...persona, [name]: cleanValue });
+  };
 
   const handlePasoUno = async (e) => {
     e.preventDefault();
@@ -162,6 +170,7 @@ export default function RegistroResidente() {
             <input
               name="numeroDocumento"
               inputMode="numeric"
+              pattern="[0-9]+"
               placeholder="Número de documento"
               value={persona.numeroDocumento}
               onChange={handlePersonaChange}
@@ -170,6 +179,7 @@ export default function RegistroResidente() {
 
             <input
               name="nombres"
+              pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
               placeholder="Nombres"
               value={persona.nombres}
               onChange={handlePersonaChange}
@@ -178,6 +188,7 @@ export default function RegistroResidente() {
 
             <input
               name="apellidos"
+              pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
               placeholder="Apellidos"
               value={persona.apellidos}
               onChange={handlePersonaChange}
@@ -186,6 +197,8 @@ export default function RegistroResidente() {
 
             <input
               name="telefono"
+              inputMode="numeric"
+              pattern="[0-9]+"
               placeholder="Teléfono"
               value={persona.telefono}
               onChange={handlePersonaChange}

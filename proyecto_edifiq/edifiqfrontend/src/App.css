@@ -26,13 +26,17 @@ body {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  background: #111827;
 }
 
 .admin-content {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 36px clamp(20px, 4vw, 56px);
-  overflow-x: auto;
+  padding: 42px clamp(20px, 4vw, 64px) 56px;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06), transparent 34%),
+    #eef3f9;
 }
 
 @media (max-width: 768px) {

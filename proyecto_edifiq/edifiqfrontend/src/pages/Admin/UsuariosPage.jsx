@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPersonas, getRoles, registrarUsuario } from "../../api";
+import Modal from "../../componentes/Modal";
 import "../../styles/modules.css";
 
 export default function UsuariosPage() {
@@ -14,6 +15,7 @@ export default function UsuariosPage() {
 	});
 	const [error, setError] = useState("");
 	const [ok, setOk] = useState("");
+	const [open, setOpen] = useState(false);
 
 	const load = () =>
 		fetch("http://localhost:8080/api/usuarios")
@@ -40,6 +42,7 @@ export default function UsuariosPage() {
 			});
 			setOk("Usuario creado correctamente.");
 			setForm({ username: "", password: "", personaId: "", rolId: "" });
+			setOpen(false);
 			load();
 		} catch (e) {
 			setError(e.message);
@@ -55,14 +58,29 @@ export default function UsuariosPage() {
 						Crea cuentas para administradores, vigilantes y residentes.
 					</p>
 				</div>
+				<button
+					type="button"
+					className="primary-btn"
+					onClick={() => {
+						setError("");
+						setOk("");
+						setForm({ username: "", password: "", personaId: "", rolId: "" });
+						setOpen(true);
+					}}
+				>
+					+ Crear usuario
+				</button>
 			</div>
 
-			<div className="card-panel">
+			{ok && <div className="form-success">{ok}</div>}
+
+			{open && <Modal title="Crear usuario" onClose={() => setOpen(false)}>
 				<form onSubmit={submit}>
 					<div className="form-grid">
 						<div className="form-group">
-							<label>Persona</label>
+							<label htmlFor="usuario-persona">Persona</label>
 							<select
+								id="usuario-persona"
 								required
 								value={form.personaId}
 								onChange={(e) => setForm({ ...form, personaId: e.target.value })}
@@ -77,8 +95,9 @@ export default function UsuariosPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Rol</label>
+							<label htmlFor="usuario-rol">Rol</label>
 							<select
+								id="usuario-rol"
 								required
 								value={form.rolId}
 								onChange={(e) => setForm({ ...form, rolId: e.target.value })}
@@ -93,8 +112,9 @@ export default function UsuariosPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Usuario</label>
+							<label htmlFor="usuario-username">Usuario</label>
 							<input
+								id="usuario-username"
 								required
 								minLength="4"
 								maxLength="50"
@@ -104,8 +124,9 @@ export default function UsuariosPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Contraseña</label>
+							<label htmlFor="usuario-password">Contraseña</label>
 							<input
+								id="usuario-password"
 								required
 								minLength="6"
 								type="password"
@@ -116,13 +137,14 @@ export default function UsuariosPage() {
 					</div>
 
 					{error && <div className="form-error">{error}</div>}
-					{ok && <div className="badge badge-success">{ok}</div>}
-
 					<div className="form-footer">
-						<button className="primary-btn">Crear usuario</button>
+						<button type="button" className="secondary-btn" onClick={() => setOpen(false)}>
+							Cancelar
+						</button>
+						<button type="submit" className="primary-btn">Crear usuario</button>
 					</div>
 				</form>
-			</div>
+			</Modal>}
 
 			<div className="card-panel" style={{ marginTop: 20 }}>
 				<div className="table-wrap">

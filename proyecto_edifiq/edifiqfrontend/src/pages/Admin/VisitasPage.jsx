@@ -8,6 +8,7 @@ import {
 	getEstadosVisita,
 	finalizarVisita,
 } from "../../api";
+import { onlyLetters, onlyNumbers } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -23,6 +24,11 @@ const initial = {
 };
 
 const fmt = (d) => (d ? new Date(d).toLocaleString("es-CO") : "—");
+const estadoBadgeClass = (nombre) => {
+	if (nombre === "Finalizada") return "badge-success";
+	if (nombre === "Cancelada") return "badge-danger";
+	return "badge-info";
+};
 
 export default function VisitasPage() {
 	const [items, setItems] = useState([]);
@@ -187,13 +193,7 @@ export default function VisitasPage() {
 										<td>{fmt(x.fechaSalida)}</td>
 										<td>
 											<span
-												className={`badge ${
-													x.estadoVisita?.nombre === "Finalizada"
-														? "badge-success"
-														: x.estadoVisita?.nombre === "Cancelada"
-															? "badge-danger"
-															: "badge-info"
-												}`}
+														className={`badge ${estadoBadgeClass(x.estadoVisita?.nombre)}`}
 											>
 												{x.estadoVisita?.nombre}
 											</span>
@@ -240,8 +240,9 @@ export default function VisitasPage() {
 						{error && <div className="form-error">{error}</div>}
 						<div className="form-grid">
 							<div className="form-group">
-								<label>Tipo de visita</label>
+								<label htmlFor="admin-visita-tipo">Tipo de visita</label>
 								<select
+									id="admin-visita-tipo"
 									required
 									value={form.tipoVisitaId}
 									onChange={(e) =>
@@ -258,8 +259,9 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Apartamento</label>
+								<label htmlFor="admin-visita-apartamento">Apartamento</label>
 								<select
+									id="admin-visita-apartamento"
 									required
 									value={form.apartamentoId}
 									onChange={(e) =>
@@ -276,8 +278,9 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Tipo de documento</label>
+								<label htmlFor="admin-visita-documento-tipo">Tipo de documento</label>
 								<select
+									id="admin-visita-documento-tipo"
 									required
 									value={form.tipoDocumentoId}
 									onChange={(e) =>
@@ -294,32 +297,34 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Documento</label>
+								<label htmlFor="admin-visita-documento">Documento</label>
 								<input
+									id="admin-visita-documento"
 									required
 									maxLength="30"
+									inputMode="numeric"
+									pattern="[0-9]+"
 									value={form.documentoVisitante}
-									onChange={(e) =>
-										setForm({ ...form, documentoVisitante: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, documentoVisitante: onlyNumbers(e.target.value) })}
 								/>
 							</div>
 
 							<div className="form-group">
-								<label>Nombre completo</label>
+								<label htmlFor="admin-visita-nombre">Nombre completo</label>
 								<input
+									id="admin-visita-nombre"
 									required
 									maxLength="100"
+									pattern="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\s'-]+"
 									value={form.nombreVisitante}
-									onChange={(e) =>
-										setForm({ ...form, nombreVisitante: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, nombreVisitante: onlyLetters(e.target.value) })}
 								/>
 							</div>
 
 							<div className="form-group">
-								<label>Motivo</label>
+								<label htmlFor="admin-visita-motivo">Motivo</label>
 								<input
+									id="admin-visita-motivo"
 									maxLength="150"
 									value={form.motivoVisita}
 									onChange={(e) =>
@@ -329,8 +334,9 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Ingreso</label>
+								<label htmlFor="admin-visita-ingreso">Ingreso</label>
 								<input
+									id="admin-visita-ingreso"
 									required
 									type="datetime-local"
 									value={form.fechaIngreso}
@@ -341,8 +347,9 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Salida</label>
+								<label htmlFor="admin-visita-salida">Salida</label>
 								<input
+									id="admin-visita-salida"
 									type="datetime-local"
 									min={form.fechaIngreso}
 									value={form.fechaSalida}
@@ -353,8 +360,9 @@ export default function VisitasPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Estado</label>
+								<label htmlFor="admin-visita-estado">Estado</label>
 								<select
+									id="admin-visita-estado"
 									required
 									value={form.estadoId}
 									onChange={(e) =>
@@ -371,7 +379,7 @@ export default function VisitasPage() {
 						</div>
 
 						<div className="form-footer">
-							<button className="primary-btn">Guardar visita</button>
+							<button type="submit" className="primary-btn">Guardar visita</button>
 						</div>
 					</form>
 				</Modal>
