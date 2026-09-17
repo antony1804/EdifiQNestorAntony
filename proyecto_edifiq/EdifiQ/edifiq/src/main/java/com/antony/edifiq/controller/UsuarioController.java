@@ -5,11 +5,14 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.antony.edifiq.model.ActualizarPerfilDTO;
 import com.antony.edifiq.model.EstadoUsuario;
 import com.antony.edifiq.model.Persona;
 import com.antony.edifiq.model.Rol;
@@ -130,6 +133,49 @@ public class UsuarioController {
         usuario.setPassword(dto.getPassword());
 
         return ResponseEntity.ok(repo.save(usuario));
+    }
+
+    // Autoservicio: el propio usuario cambia su username y/o contraseña.
+    // El rol NUNCA se toca aquí (ni siquiera se recibe en el DTO).
+    @PutMapping("/{id}/perfil")
+    public ResponseEntity<?> actualizarPerfil(
+            @PathVariable Long id,
+            @RequestBody ActualizarPerfilDTO dto) {
+
+        Usuario u = repo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (dto.getPasswordActual() == null
+                || !dto.getPasswordActual().equals(u.getPassword())) {
+            throw new IllegalArgumentException("La contraseña actual no es correcta");
+        }
+
+        if (dto.getUsername() != null && !dto.getUsername().isBlank()
+                && !dto.getUsername().equals(u.getUsername())) {
+
+            if (dto.getUsername().length() < 4 || dto.getUsername().length() > 50) {
+                throw new IllegalArgumentException(
+                        "El usuario debe tener entre 4 y 50 caracteres");
+            }
+
+            repo.findByUsername(dto.getUsername())
+                    .filter(existente -> !existente.getId().equals(id))
+                    .ifPresent(existente -> {
+                        throw new IllegalArgumentException("El nombre de usuario ya existe");
+                    });
+
+            u.setUsername(dto.getUsername());
+        }
+
+        if (dto.getPasswordNueva() != null && !dto.getPasswordNueva().isBlank()) {
+            if (dto.getPasswordNueva().length() < 6) {
+                throw new IllegalArgumentException(
+                        "La nueva contraseña debe tener al menos 6 caracteres");
+            }
+            u.setPassword(dto.getPasswordNueva());
+        }
+
+        return ResponseEntity.ok(repo.save(u));
     }
 
     // Login

@@ -1,4 +1,5 @@
-const BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/api`;
+const ROOT_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const BASE_URL = `${ROOT_URL}/api`;
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
@@ -66,6 +67,13 @@ export const eliminarPersona = (id) => personasApi.remove(id);
 export const registrarUsuario = (u) =>
   request(`${BASE_URL}/usuarios`, { method: "POST", body: JSON.stringify(u) });
 
+// Autoservicio: el propio usuario actualiza su username/contraseña (nunca el rol)
+export const actualizarPerfilUsuario = (id, dto) =>
+  request(`${BASE_URL}/usuarios/${id}/perfil`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+
 export const registrarUsuarioResidente = (datos) =>
   request(`${BASE_URL}/usuarios/registro-residente`, { method: "POST", body: JSON.stringify(datos) });
 
@@ -75,8 +83,49 @@ export const loginUsuario = (credenciales) =>
 export const entregarPaquete = (id) =>
   request(`${BASE_URL}/paquetes/${id}/entregar`, { method: "PATCH" });
 
-export const pagarRecibo = (id) =>
-  request(`${BASE_URL}/recibos/${id}/pagar`, { method: "PATCH" });
+// Recibos pendientes de que el admin revise el comprobante subido por el residente
+export const recibosPendientesRevision = () =>
+  request(`${BASE_URL}/recibos/pendientes-revision`);
+
+// El residente sube la foto del comprobante de pago (multipart, sin JSON)
+export const subirComprobanteRecibo = async (id, archivo) => {
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  const response = await fetch(`${BASE_URL}/recibos/${id}/comprobante`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof data === "object"
+        ? data?.error || Object.values(data || {})[0] || "No se pudo subir el comprobante"
+        : data || "No se pudo subir el comprobante";
+    throw new Error(message);
+  }
+  return data;
+};
+
+// Solo admin: aprueba el comprobante -> el recibo queda "Pagado"
+export const verificarRecibo = (id) =>
+  request(`${BASE_URL}/recibos/${id}/verificar`, { method: "PATCH" });
+
+// Solo admin: rechaza el comprobante -> el recibo vuelve a "Pendiente"
+export const rechazarRecibo = (id) =>
+  request(`${BASE_URL}/recibos/${id}/rechazar`, { method: "PATCH" });
+
+// Construye la url pública de la imagen del comprobante guardado
+export const comprobanteUrl = (rutaComprobante) =>
+  `${ROOT_URL}/uploads/comprobantes/${rutaComprobante}`;
 
 export const cancelarReserva = (id) =>
   request(`${BASE_URL}/reservas/${id}/cancelar`, { method: "PATCH" });

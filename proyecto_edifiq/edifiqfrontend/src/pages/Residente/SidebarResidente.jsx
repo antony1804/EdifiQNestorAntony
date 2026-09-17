@@ -7,6 +7,7 @@ import reciboIcon from "../../assets/factura.png";
 import reservaIcon from "../../assets/fecha.png";
 import visitaIcon from "../../assets/visita.png";
 import salidaIcon from "../../assets/salida.png";
+import usuarioIcon from "../../assets/usuario.png";
 
 const links = [
 	{ to: "/residente", label: "Inicio", icon: inicioIcon },
@@ -16,6 +17,7 @@ const links = [
 	{ to: "/residente/recibos", label: "Mis recibos", icon: reciboIcon },
 	{ to: "/residente/reservas", label: "Mis reservas", icon: reservaIcon },
 	{ to: "/residente/visitas", label: "Mis visitas", icon: visitaIcon },
+	{ to: "/residente/perfil", label: "Mi perfil", icon: usuarioIcon },
 ];
 
 export default function SidebarResidente() {

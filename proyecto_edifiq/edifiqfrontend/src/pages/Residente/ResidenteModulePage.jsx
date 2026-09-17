@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import {getApartamentoDePersona,paquetesApi,recibosApi,reservasApi,visitasApi,pagarRecibo,cancelarReserva,zonasApi,getTiposVisita,getTiposDocumento} from "../../api";
+import {getApartamentoDePersona,paquetesApi,reservasApi,visitasApi,cancelarReserva,zonasApi,getTiposVisita,getTiposDocumento} from "../../api";
 import "../../styles/modules.css";
 import Modal from "../../componentes/Modal";
 import {onlyLetters,onlyNumbers} from "../../utils/validation";
@@ -25,7 +25,7 @@ export default function ResidenteModulePage({type}){
          setItems([]);
          return;
        }
-       const fn={paquetes:paquetesApi.list,reservas:reservasApi.list,recibos:recibosApi.list,visitas:visitasApi.list}[type];
+       const fn={paquetes:paquetesApi.list,reservas:reservasApi.list,visitas:visitasApi.list}[type];
        const data=await fn();
        setItems(data.filter(x=>x.apartamento?.id===apartamentoPersona.apartamento?.id));
      }catch(e){
@@ -46,11 +46,10 @@ export default function ResidenteModulePage({type}){
  if(loading)return <div className="module-page"><div className="card-panel">Cargando información...</div></div>;
  if(!apt)return <div className="module-page"><div className="card-panel"><h2>Mi apartamento</h2><p>{error||"Tu usuario aún no tiene un apartamento asignado."}</p></div></div>;
  const a=apt.apartamento;
- const titles={paquetes:["Mis paquetes","Consulta los paquetes recibidos en tu apartamento."],recibos:["Mis recibos","Consulta tus cobros y registra pagos."],reservas:["Mis reservas","Consulta y administra tus reservas."],visitas:["Mis visitas","Consulta las visitas asociadas a tu apartamento."]};
+ const titles={paquetes:["Mis paquetes","Consulta los paquetes recibidos en tu apartamento."],reservas:["Mis reservas","Consulta y administra tus reservas."],visitas:["Mis visitas","Consulta las visitas asociadas a tu apartamento."]};
  const [title,subtitle]=titles[type];
- const pay=async id=>{try{await pagarRecibo(id);location.reload()}catch(e){setError(e.message)}}; const cancel=async id=>{if(confirm("¿Cancelar esta reserva?")){try{await cancelarReserva(id);location.reload()}catch(e){setError(e.message)}}};
+ const cancel=async id=>{if(confirm("¿Cancelar esta reserva?")){try{await cancelarReserva(id);location.reload()}catch(e){setError(e.message)}}};
  return <div className="module-page"><div className="module-header"><div><h1 className="module-title">{title}</h1><p className="module-subtitle">{subtitle}</p></div><div className="module-actions">{(type==="reservas"||type==="visitas")&&<button className="primary-btn" onClick={()=>{setError("");setOpen(true);setForm(f=>({...f,fechaIngreso:new Date().toISOString().slice(0,16)}))}}>+ {type==="reservas"?"Nueva reserva":"Registrar visita"}</button>}<span className="badge badge-info">{a.torre?.nombreTorre} · {a.numeroApartamento}</span></div></div><div className="card-panel">{error&&<div className="form-error">{error}</div>}{type==="paquetes"&&<table className="module-table"><thead><tr><th>Descripción</th><th>Remitente</th><th>Recepción</th><th>Entrega</th><th>Estado</th></tr></thead><tbody>{items.length?items.map(x=><tr key={x.id}><td>{x.descripcion}</td><td>{x.remitente}</td><td>{x.fechaRecepcion?.replace("T"," ").slice(0,16)}</td><td>{x.fechaEntrega?.replace("T"," ").slice(0,16)||"Pendiente"}</td><td><span className={`badge ${x.estadoPaquete?.nombre==="Entregado"?"badge-success":"badge-warning"}`}>{x.estadoPaquete?.nombre}</span></td></tr>):<tr><td colSpan="5" className="empty-row">No tienes paquetes registrados.</td></tr>}</tbody></table>}
- {type==="recibos"&&<table className="module-table"><thead><tr><th>Servicio</th><th>Periodo</th><th>Valor</th><th>Vencimiento</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{items.length?items.map(x=><tr key={x.id}><td>{x.tipoServicio?.nombre}</td><td>{x.periodo}</td><td>${Number(x.valor).toLocaleString("es-CO")}</td><td>{x.fechaVencimiento}</td><td><span className={`badge ${x.estadoRecibo?.nombre==="Pagado"?"badge-success":"badge-warning"}`}>{x.estadoRecibo?.nombre}</span></td><td>{x.estadoRecibo?.nombre!=="Pagado"&&<button className="small-btn" onClick={()=>pay(x.id)}>Marcar como pagado</button>}</td></tr>):<tr><td colSpan="6" className="empty-row">No tienes recibos.</td></tr>}</tbody></table>}
  {type==="reservas"&&<table className="module-table"><thead><tr><th>Zona</th><th>Fecha</th><th>Horario</th><th>Invitados</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{items.length?items.map(x=><tr key={x.id}><td>{x.zona?.nombre}</td><td>{x.fechaReserva}</td><td>{x.horaInicio?.slice(0,5)} - {x.horaFin?.slice(0,5)}</td><td>{x.cantidadInvitados}</td><td><span className={`badge ${x.estadoReserva?.nombre==="Cancelada"?"badge-danger":"badge-info"}`}>{x.estadoReserva?.nombre}</span></td><td>{x.estadoReserva?.nombre!=="Cancelada"&&<button className="small-btn" onClick={()=>cancel(x.id)}>Cancelar</button>}</td></tr>):<tr><td colSpan="6" className="empty-row">No tienes reservas.</td></tr>}</tbody></table>}
  {type==="visitas"&&<table className="module-table"><thead><tr><th>Visitante</th><th>Tipo</th><th>Motivo</th><th>Ingreso</th><th>Salida</th><th>Estado</th></tr></thead><tbody>{items.length?items.map(x=><tr key={x.id}><td>{x.nombreVisitante}</td><td>{x.tipoVisita?.nombre}</td><td>{x.motivoVisita||"—"}</td><td>{x.fechaIngreso?.replace("T"," ").slice(0,16)}</td><td>{x.fechaSalida?.replace("T"," ").slice(0,16)||"—"}</td><td><span className="badge badge-info">{x.estadoVisita?.nombre}</span></td></tr>):<tr><td colSpan="6" className="empty-row">No tienes visitas.</td></tr>}</tbody></table>}
  </div>

@@ -11,7 +11,9 @@ export default function VigilanteHomePage() {
 
   const tarjetas = [
     ["01", "Control de visitas", "Registra entradas y salidas de visitantes.", "/vigilante/visitas"],
-    ["02", "Gestión de paquetes", "Registra y controla los paquetes recibidos.", "/vigilante/paquetes"]
+    ["02", "Gestión de paquetes", "Registra y controla los paquetes recibidos.", "/vigilante/paquetes"],
+    ["03", "Recibos", "Consulta y registra recibos del conjunto.", "/vigilante/recibos"],
+    ["04", "Mi perfil", "Revisa y actualiza tus datos personales.", "/vigilante/perfil"]
   ];
 
   return (
@@ -34,7 +36,7 @@ export default function VigilanteHomePage() {
           <span className="admin-overview-kicker">OPERACIÓN DIARIA</span>
           <h2>Accesos rápidos</h2>
         </div>
-        <span className="admin-module-count">2 módulos activos</span>
+        <span className="admin-module-count">4 módulos activos</span>
       </div>
 
       <div className="admin-module-list vigilante-module-list">

@@ -118,7 +118,8 @@ CREATE TABLE estado_recibo(
 INSERT INTO estado_recibo(nombre)
 VALUES
 ('Pendiente'),
-('Pagado');
+('Pagado'),
+('Pendiente por revisar');
 
 -- -----------------------------------------------------
 

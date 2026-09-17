@@ -3,6 +3,7 @@ package com.antony.edifiq.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,10 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.antony.edifiq.model.Recibo;
-import com.antony.edifiq.repository.EstadoReciboRepository;
 import com.antony.edifiq.service.ReciboService;
 
 @RestController
@@ -24,11 +26,9 @@ import com.antony.edifiq.service.ReciboService;
 @CrossOrigin(origins = "*")
 public class ReciboController {
 	private final ReciboService service;
-	private final EstadoReciboRepository estadoRepo;
 
-	public ReciboController(ReciboService s, EstadoReciboRepository e) {
+	public ReciboController(ReciboService s) {
 		service = s;
-		estadoRepo = e;
 	}
 
 	@GetMapping
@@ -41,6 +41,15 @@ public class ReciboController {
 		return service.porApartamento(id);
 	}
 
+	// Recibos que el residente ya marcó como pagados (subió comprobante) y el
+	// admin todavía no ha revisado.
+	@GetMapping("/pendientes-revision")
+	public List<Recibo> pendientesRevision() {
+		return service.pendientesPorRevisar();
+	}
+
+	// Registro de un recibo nuevo: lo puede usar tanto el admin como el vigilante.
+	// Siempre nace en estado "Pendiente".
 	@PostMapping
 	public ResponseEntity<?> crear(
 			@RequestBody @jakarta.validation.Valid Recibo r) {
@@ -60,16 +69,24 @@ public class ReciboController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PatchMapping("/{id}/pagar")
-	public ResponseEntity<?> pagar(@PathVariable Long id) {
-		var r = service.listar().stream()
-				.filter(x -> x.getId().equals(id))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("Recibo no encontrado"));
-		r.setEstadoRecibo(estadoRepo.findAll().stream()
-				.filter(e -> e.getNombre().equalsIgnoreCase("Pagado"))
-				.findFirst()
-				.orElseThrow());
-		return ResponseEntity.ok(service.actualizar(id, r));
+	// El residente selecciona un recibo pendiente y sube la foto del
+	// comprobante de pago. El recibo pasa a "Pendiente por revisar".
+	@PostMapping(value = "/{id}/comprobante", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> subirComprobante(
+			@PathVariable Long id,
+			@RequestParam("archivo") MultipartFile archivo) {
+		return ResponseEntity.ok(service.subirComprobante(id, archivo));
+	}
+
+	// Solo el admin: aprueba el comprobante y marca el recibo como "Pagado".
+	@PatchMapping("/{id}/verificar")
+	public ResponseEntity<?> verificar(@PathVariable Long id) {
+		return ResponseEntity.ok(service.verificarPago(id));
+	}
+
+	// Solo el admin: rechaza el comprobante y el recibo vuelve a "Pendiente".
+	@PatchMapping("/{id}/rechazar")
+	public ResponseEntity<?> rechazar(@PathVariable Long id) {
+		return ResponseEntity.ok(service.rechazarComprobante(id));
 	}
 }

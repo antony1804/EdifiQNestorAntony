@@ -11,6 +11,7 @@ import visitaIcon from "../assets/visita.png";
 import parqueIcon from "../assets/parque.png";
 import masIcon from "../assets/mas.png";
 import salidaIcon from "../assets/salida.png";
+import usuarioIcon from "../assets/usuario.png";
 
 const links = [
 	{ to: "/admin", label: "Inicio", icon: inicioIcon },
@@ -24,6 +25,7 @@ const links = [
 	{ to: "/admin/visitas", label: "Visitas", icon: visitaIcon },
 	{ to: "/admin/zonas", label: "Zonas comunes", icon: parqueIcon },
 	{ to: "/admin/registro", label: "Crear usuario", icon: masIcon },
+	{ to: "/admin/perfil", label: "Mi perfil", icon: usuarioIcon },
 ];
 
 export default function Sidebar() {

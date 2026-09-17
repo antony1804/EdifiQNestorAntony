@@ -1,20 +1,36 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import inicioIcon from "../assets/inicio.png";
+import visitaIcon from "../assets/visita.png";
+import paqueteIcon from "../assets/caja.png";
+import reciboIcon from "../assets/factura.png";
+import usuarioIcon from "../assets/usuario.png";
+import salidaIcon from "../assets/salida.png";
 
 const links = [
   {
     to: "/vigilante",
     label: "Inicio",
-    icon: "🏠"
+    icon: inicioIcon
   },
   {
     to: "/vigilante/visitas",
     label: "Visitas",
-    icon: "🚪"
+    icon: visitaIcon
   },
   {
     to: "/vigilante/paquetes",
     label: "Paquetes",
-    icon: "📦"
+    icon: paqueteIcon
+  },
+  {
+    to: "/vigilante/recibos",
+    label: "Recibos",
+    icon: reciboIcon
+  },
+  {
+    to: "/vigilante/perfil",
+    label: "Mi perfil",
+    icon: usuarioIcon
   }
 ];
 
@@ -64,11 +80,9 @@ export default function VigilanteSidebar() {
             }
           >
 
-            <span>
-              {link.icon}
+            <span className="admin-sidebar-icon" aria-hidden="true">
+              <img src={link.icon} alt="" />
             </span>
-
-            {" "}
 
             {link.label}
 
@@ -83,7 +97,10 @@ export default function VigilanteSidebar() {
         className="logout-btn"
         onClick={cerrarSesion}
       >
-        🚪 Cerrar sesión
+        <span className="admin-sidebar-icon" aria-hidden="true">
+          <img src={salidaIcon} alt="" />
+        </span>
+        <span>Cerrar sesión</span>
       </button>
 
     </aside>

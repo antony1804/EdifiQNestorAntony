@@ -5,6 +5,7 @@ import ProtectedRoute from "./componentes/ProtectedRoute";
 import RoleRoute from "./componentes/RoleRoute";
 import VigilanteVisitasPage from "./pages/Vigilante/VisitasPage";
 import VigilantePaquetesPage from "./pages/Vigilante/PaquetesPage";
+import VigilanteRecibosPage from "./pages/Vigilante/RecibosPage";
 import LandingPage from "./pages/LadingPages";
 import HomePage from "./pages/Admin/AdminHomePages";
 import PersonasPage from "./pages/Admin/PersonaPages";
@@ -32,6 +33,8 @@ import SidebarResidente from "./pages/Residente/SidebarResidente";
 
 import VigilanteSidebar from "./componentes/VigilanteSidebar";
 import VigilanteHomePage from "./pages/Vigilante/VigilanteHomePage";
+
+import PerfilPage from "./pages/PerfilPage";
 
 import "./App.css";
 import "./componentes/sidebar.css";
@@ -234,6 +237,15 @@ return ( <BrowserRouter>
       }
     />
 
+    <Route
+      path="/admin/perfil"
+      element={
+        <AdminRoute>
+          <PerfilPage />
+        </AdminRoute>
+      }
+    />
+
 
     {/* ===============================
         RESIDENTE
@@ -302,6 +314,15 @@ return ( <BrowserRouter>
       }
     />
 
+    <Route
+      path="/residente/perfil"
+      element={
+        <ResidentRoute>
+          <PerfilPage />
+        </ResidentRoute>
+      }
+    />
+
 
     {/* ===============================
         VIGILANTE
@@ -317,6 +338,8 @@ return ( <BrowserRouter>
     />
     <Route path="/vigilante/visitas" element={<VigilanteRoute><VigilanteVisitasPage /></VigilanteRoute>} />
     <Route path="/vigilante/paquetes" element={<VigilanteRoute><VigilantePaquetesPage /></VigilanteRoute>} />
+    <Route path="/vigilante/recibos" element={<VigilanteRoute><VigilanteRecibosPage /></VigilanteRoute>} />
+    <Route path="/vigilante/perfil" element={<VigilanteRoute><PerfilPage /></VigilanteRoute>} />
 
     {/* REDIRECCIÓN */}
 

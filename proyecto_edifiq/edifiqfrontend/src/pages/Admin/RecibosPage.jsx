@@ -4,8 +4,10 @@ import {
 	recibosApi,
 	apartamentosApi,
 	getTiposServicio,
-	getEstadosRecibo,
-	pagarRecibo,
+	recibosPendientesRevision,
+	verificarRecibo,
+	rechazarRecibo,
+	comprobanteUrl,
 } from "../../api";
 import { onlyDecimal } from "../../utils/validation";
 import "../../styles/modules.css";
@@ -16,7 +18,6 @@ const initial = {
 	valor: "",
 	fechaEmision: "",
 	fechaVencimiento: "",
-	estadoId: "1",
 	apartamentoId: "",
 };
 
@@ -27,11 +28,18 @@ const money = (v) =>
 		maximumFractionDigits: 0,
 	}).format(Number(v || 0));
 
+const badgeClase = (nombreEstado) => {
+	if (nombreEstado === "Pagado") return "badge-success";
+	if (nombreEstado === "Pendiente por revisar") return "badge-info";
+	return "badge-warning";
+};
+
 export default function RecibosPage() {
+	const [tab, setTab] = useState("todos"); // "todos" | "revision"
 	const [items, setItems] = useState([]);
+	const [revision, setRevision] = useState([]);
 	const [apts, setApts] = useState([]);
 	const [servicios, setServicios] = useState([]);
-	const [estados, setEstados] = useState([]);
 	const [form, setForm] = useState(initial);
 	const [editId, setEditId] = useState(null);
 	const [open, setOpen] = useState(false);
@@ -41,12 +49,20 @@ export default function RecibosPage() {
 	const load = () =>
 		recibosApi.list().then(setItems).catch((e) => setError(e.message));
 
+	const loadRevision = () =>
+		recibosPendientesRevision().then(setRevision).catch((e) => setError(e.message));
+
 	useEffect(() => {
 		load();
+		loadRevision();
 		apartamentosApi.list().then(setApts);
 		getTiposServicio().then(setServicios);
-		getEstadosRecibo().then(setEstados);
 	}, []);
+
+	const refrescarTodo = () => {
+		load();
+		loadRevision();
+	};
 
 	const submit = async (e) => {
 		e.preventDefault();
@@ -59,7 +75,6 @@ export default function RecibosPage() {
 				valor: Number(form.valor),
 				fechaEmision: form.fechaEmision,
 				fechaVencimiento: form.fechaVencimiento,
-				estadoRecibo: { id: Number(form.estadoId) },
 				apartamento: { id: Number(form.apartamentoId) },
 			};
 
@@ -72,7 +87,7 @@ export default function RecibosPage() {
 			setOpen(false);
 			setEditId(null);
 			setForm(initial);
-			load();
+			refrescarTodo();
 		} catch (e) {
 			setError(e.message);
 		}
@@ -85,27 +100,37 @@ export default function RecibosPage() {
 			valor: x.valor,
 			fechaEmision: x.fechaEmision,
 			fechaVencimiento: x.fechaVencimiento,
-			estadoId: x.estadoRecibo?.id ?? "1",
 			apartamentoId: x.apartamento?.id ?? "",
 		});
 		setEditId(x.id);
 		setOpen(true);
 	};
 
-	const pay = async (id) => {
+	const remove = async (id) => {
+		if (confirm("¿Eliminar recibo?")) {
+			try {
+				await recibosApi.remove(id);
+				refrescarTodo();
+			} catch (e) {
+				setError(e.message);
+			}
+		}
+	};
+
+	const aprobar = async (id) => {
 		try {
-			await pagarRecibo(id);
-			load();
+			await verificarRecibo(id);
+			refrescarTodo();
 		} catch (e) {
 			setError(e.message);
 		}
 	};
 
-	const remove = async (id) => {
-		if (confirm("¿Eliminar recibo?")) {
+	const rechazar = async (id) => {
+		if (confirm("¿Rechazar este comprobante? El recibo volverá a pendiente por pagar.")) {
 			try {
-				await recibosApi.remove(id);
-				load();
+				await rechazarRecibo(id);
+				refrescarTodo();
 			} catch (e) {
 				setError(e.message);
 			}
@@ -124,100 +149,182 @@ export default function RecibosPage() {
 				<div>
 					<h1 className="module-title">Recibos</h1>
 					<p className="module-subtitle">
-						Gestiona los cobros y estados de pago.
+						Gestiona los cobros y revisa los comprobantes de pago.
 					</p>
 				</div>
+				{tab === "todos" && (
+					<button
+						className="primary-btn"
+						onClick={() => {
+							setForm(initial);
+							setEditId(null);
+							setError("");
+							setOpen(true);
+						}}
+					>
+						+ Crear recibo
+					</button>
+				)}
+			</div>
+
+			<div className="toolbar" style={{ marginBottom: 12 }}>
 				<button
-					className="primary-btn"
-					onClick={() => {
-						setForm(initial);
-						setEditId(null);
-						setError("");
-						setOpen(true);
-					}}
+					className={tab === "todos" ? "primary-btn" : "small-btn"}
+					onClick={() => setTab("todos")}
 				>
-					+ Crear recibo
+					Todos los recibos
+				</button>
+				<button
+					className={tab === "revision" ? "primary-btn" : "small-btn"}
+					onClick={() => setTab("revision")}
+				>
+					Pendientes por revisar
+					{revision.length > 0 ? ` (${revision.length})` : ""}
 				</button>
 			</div>
 
-			<div className="card-panel">
-				<div className="toolbar">
-					<strong>{items.length} recibos</strong>
-					<input
-						className="search-input"
-						placeholder="Buscar recibo..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
-				</div>
+			{error && <div className="form-error">{error}</div>}
 
-				<div className="table-wrap">
-					<table className="module-table">
-						<thead>
-							<tr>
-								<th>Servicio</th>
-								<th>Periodo</th>
-								<th>Valor</th>
-								<th>Apartamento</th>
-								<th>Vencimiento</th>
-								<th>Estado</th>
-								<th>Acciones</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filtered.length ? (
-								filtered.map((x) => (
-									<tr key={x.id}>
-										<td>{x.tipoServicio?.nombre}</td>
-										<td>{x.periodo}</td>
-										<td>{money(x.valor)}</td>
-										<td>
-											{x.apartamento?.torre?.nombreTorre} - {x.apartamento?.numeroApartamento}
-										</td>
-										<td>{x.fechaVencimiento}</td>
-										<td>
-											<span
-												className={`badge ${
-													x.estadoRecibo?.nombre === "Pagado"
-														? "badge-success"
-														: "badge-warning"
-												}`}
-											>
-												{x.estadoRecibo?.nombre}
-											</span>
-										</td>
-										<td className="actions-cell">
-											{x.estadoRecibo?.nombre !== "Pagado" && (
-												<button
-													className="small-btn"
-													onClick={() => pay(x.id)}
-												>
-													Marcar pagado
-												</button>
-											)}{" "}
-											<button className="small-btn" onClick={() => edit(x)}>
-												Editar
-											</button>{" "}
-											<button
-												className="danger-btn small-btn"
-												onClick={() => remove(x.id)}
-											>
-												Eliminar
-											</button>
+			{tab === "todos" && (
+				<div className="card-panel">
+					<div className="toolbar">
+						<strong>{items.length} recibos</strong>
+						<input
+							className="search-input"
+							placeholder="Buscar recibo..."
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+						/>
+					</div>
+
+					<div className="table-wrap">
+						<table className="module-table">
+							<thead>
+								<tr>
+									<th>Servicio</th>
+									<th>Periodo</th>
+									<th>Valor</th>
+									<th>Apartamento</th>
+									<th>Vencimiento</th>
+									<th>Estado</th>
+									<th>Acciones</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filtered.length ? (
+									filtered.map((x) => (
+										<tr key={x.id}>
+											<td>{x.tipoServicio?.nombre}</td>
+											<td>{x.periodo}</td>
+											<td>{money(x.valor)}</td>
+											<td>
+												{x.apartamento?.torre?.nombreTorre} - {x.apartamento?.numeroApartamento}
+											</td>
+											<td>{x.fechaVencimiento}</td>
+											<td>
+												<span className={`badge ${badgeClase(x.estadoRecibo?.nombre)}`}>
+													{x.estadoRecibo?.nombre}
+												</span>
+											</td>
+											<td className="actions-cell">
+												{x.estadoRecibo?.nombre === "Pendiente" && (
+													<>
+														<button className="small-btn" onClick={() => edit(x)}>
+															Editar
+														</button>{" "}
+														<button
+															className="danger-btn small-btn"
+															onClick={() => remove(x.id)}
+														>
+															Eliminar
+														</button>
+													</>
+												)}
+												{x.estadoRecibo?.nombre === "Pendiente por revisar" && (
+													<span className="module-subtitle">Ver en "Pendientes por revisar"</span>
+												)}
+											</td>
+										</tr>
+									))
+								) : (
+									<tr>
+										<td colSpan="7" className="empty-row">
+											No hay recibos.
 										</td>
 									</tr>
-								))
-							) : (
-								<tr>
-									<td colSpan="7" className="empty-row">
-										No hay recibos.
-									</td>
-								</tr>
-							)}
-						</tbody>
-					</table>
+								)}
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</div>
+			)}
+
+			{tab === "revision" && (
+				<div className="card-panel">
+					<div className="toolbar">
+						<strong>{revision.length} comprobantes por revisar</strong>
+					</div>
+
+					<div className="table-wrap">
+						<table className="module-table">
+							<thead>
+								<tr>
+									<th>Servicio</th>
+									<th>Periodo</th>
+									<th>Valor</th>
+									<th>Apartamento</th>
+									<th>Comprobante</th>
+									<th>Acciones</th>
+								</tr>
+							</thead>
+							<tbody>
+								{revision.length ? (
+									revision.map((x) => (
+										<tr key={x.id}>
+											<td>{x.tipoServicio?.nombre}</td>
+											<td>{x.periodo}</td>
+											<td>{money(x.valor)}</td>
+											<td>
+												{x.apartamento?.torre?.nombreTorre} - {x.apartamento?.numeroApartamento}
+											</td>
+											<td>
+												{x.rutaComprobante ? (
+													<a
+														href={comprobanteUrl(x.rutaComprobante)}
+														target="_blank"
+														rel="noreferrer"
+													>
+														Ver comprobante
+													</a>
+												) : (
+													"—"
+												)}
+											</td>
+											<td className="actions-cell">
+												<button className="small-btn" onClick={() => aprobar(x.id)}>
+													Aprobar pago
+												</button>{" "}
+												<button
+													className="danger-btn small-btn"
+													onClick={() => rechazar(x.id)}
+												>
+													Rechazar
+												</button>
+											</td>
+										</tr>
+									))
+								) : (
+									<tr>
+										<td colSpan="6" className="empty-row">
+											No hay comprobantes pendientes por revisar.
+										</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			)}
 
 			{open && (
 				<Modal
@@ -310,24 +417,12 @@ export default function RecibosPage() {
 									}
 								/>
 							</div>
-
-							<div className="form-group">
-								<label>Estado</label>
-								<select
-									required
-									value={form.estadoId}
-									onChange={(e) =>
-										setForm({ ...form, estadoId: e.target.value })
-									}
-								>
-									{estados.map((x) => (
-										<option key={x.id} value={x.id}>
-											{x.nombre}
-										</option>
-									))}
-								</select>
-							</div>
 						</div>
+
+						<p className="module-subtitle">
+							El recibo se crea como "Pendiente por pagar". El estado solo
+							cambia cuando el residente sube su comprobante y tú lo revisas.
+						</p>
 
 						<div className="form-footer">
 							<button className="primary-btn">Guardar</button>
