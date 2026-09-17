@@ -8,6 +8,13 @@ import {
 } from "../../api";
 import Modal from "../../componentes/Modal";
 import FamiliaresTable from "../../componentes/FamiliaresTable";
+import {
+	isValidDocumentNumber,
+	isValidEmail,
+	isValidName,
+	isValidPhone,
+	normalizeText,
+} from "../../utils/validation";
 import "../../styles/modules.css";
 
 const FORM_INICIAL = {
@@ -94,16 +101,40 @@ export default function FamiliaresPage() {
 			return;
 		}
 
+		const tipoDocumentoId = Number(form.tipoDocumentoId);
+		const numeroDocumento = normalizeText(form.numeroDocumento);
+		const nombres = normalizeText(form.nombres);
+		const apellidos = normalizeText(form.apellidos);
+		const telefono = normalizeText(form.telefono);
+		const correo = normalizeText(form.correo);
+
+		if (!tipoDocumentoId || !isValidDocumentNumber(numeroDocumento)) {
+			setError("El documento es obligatorio y debe tener entre 6 y 20 dígitos.");
+			return;
+		}
+		if (!isValidName(nombres) || !isValidName(apellidos)) {
+			setError("Nombres y apellidos deben contener solo letras y no pueden estar vacíos.");
+			return;
+		}
+		if (!isValidPhone(telefono)) {
+			setError("El teléfono debe contener solo números y tener entre 7 y 20 dígitos.");
+			return;
+		}
+		if (correo && !isValidEmail(correo)) {
+			setError("El correo electrónico no tiene un formato válido.");
+			return;
+		}
+
 		setSaving(true);
 		try {
 			await registrarFamiliar({
 				persona: {
-					tipoDocumento: { id: Number(form.tipoDocumentoId) },
-					numeroDocumento: form.numeroDocumento.trim(),
-					nombres: form.nombres.trim(),
-					apellidos: form.apellidos.trim(),
-					telefono: form.telefono.trim() || null,
-					correo: form.correo.trim() || null,
+					tipoDocumento: { id: tipoDocumentoId },
+					numeroDocumento,
+					nombres,
+					apellidos,
+					telefono: telefono || null,
+					correo: correo || null,
 				},
 				idApartamento: apt.apartamento.id,
 				idTipoResidente: tipoFamiliarId,

@@ -266,3 +266,24 @@
 .auth-form > a:hover {
   color: #2463eb;
 }
+
+.auth-form.recovery-form h2::after {
+  content: "Te enviaremos un enlace a tu correo registrado";
+}
+
+.auth-form .auth-link {
+  align-self: center;
+  margin-top: 24px;
+}
+
+.auth-success {
+  color: #23734d;
+  background: #effaf4;
+  border: 1px solid #c9eed9;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 10px 13px;
+  margin-top: 18px;
+}

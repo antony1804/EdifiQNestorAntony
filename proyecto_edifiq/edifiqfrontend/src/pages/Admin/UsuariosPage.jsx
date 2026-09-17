@@ -1,7 +1,22 @@
 import { useEffect, useState } from "react";
-import { getPersonas, getRoles, registrarUsuario } from "../../api";
+import {
+	cambiarEstadoUsuario,
+	generarPasswordTemporal,
+	getPersonas,
+	getRoles,
+	registrarUsuario,
+} from "../../api";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import "../../styles/modules.css";
+
+const usuarioEstaActivo = (usuario) =>
+	usuario.estadoUsuario?.nombre?.toLowerCase() === "activo";
+
+const textoEstado = (usuario, guardando) => {
+	if (guardando) return "Guardando...";
+	return usuarioEstaActivo(usuario) ? "Desactivar" : "Activar";
+};
 
 export default function UsuariosPage() {
 	const [personas, setPersonas] = useState([]);
@@ -15,6 +30,11 @@ export default function UsuariosPage() {
 	});
 	const [error, setError] = useState("");
 	const [ok, setOk] = useState("");
+	const [temporal, setTemporal] = useState(null);
+	const [generandoId, setGenerandoId] = useState(null);
+	const [cambiandoEstadoId, setCambiandoEstadoId] = useState(null);
+	const [search, setSearch] = useState("");
+	const [filtros, setFiltros] = useState({ rol: "", estado: "" });
 	const [open, setOpen] = useState(false);
 
 	const load = () =>
@@ -49,6 +69,50 @@ export default function UsuariosPage() {
 		}
 	};
 
+	const generarTemporal = async (usuario) => {
+		setError("");
+		setOk("");
+		setTemporal(null);
+		setGenerandoId(usuario.id);
+
+		try {
+			const resultado = await generarPasswordTemporal(usuario.id);
+			setTemporal(resultado);
+		} catch (e) {
+			setError(e.message || "No se pudo generar la contraseña temporal.");
+		} finally {
+			setGenerandoId(null);
+		}
+	};
+
+	const cambiarEstado = async (usuario) => {
+		setError("");
+		setOk("");
+		setCambiandoEstadoId(usuario.id);
+
+		try {
+			const activo = usuario.estadoUsuario?.nombre?.toLowerCase() !== "activo";
+			const resultado = await cambiarEstadoUsuario(usuario.id, activo);
+			setUsers((actuales) => actuales.map((actual) => (
+				actual.id === usuario.id
+					? { ...actual, estadoUsuario: { ...actual.estadoUsuario, nombre: resultado.estado } }
+					: actual
+			)));
+			setOk(`Usuario ${activo ? "activado" : "desactivado"} correctamente.`);
+		} catch (e) {
+			setError(e.message || "No se pudo cambiar el estado del usuario.");
+		} finally {
+			setCambiandoEstadoId(null);
+		}
+	};
+
+	const usuariosFiltrados = users.filter((usuario) => {
+		const texto = `${usuario.username} ${usuario.persona?.nombres} ${usuario.persona?.apellidos} ${usuario.persona?.numeroDocumento}`.toLowerCase();
+		return texto.includes(search.toLowerCase())
+			&& (!filtros.rol || String(usuario.rol?.id) === filtros.rol)
+			&& (!filtros.estado || (filtros.estado === "activo" ? usuarioEstaActivo(usuario) : !usuarioEstaActivo(usuario)));
+	});
+
 	return (
 		<div className="module-page">
 			<div className="module-header">
@@ -73,6 +137,22 @@ export default function UsuariosPage() {
 			</div>
 
 			{ok && <div className="form-success">{ok}</div>}
+			{error && !open && <div className="form-error">{error}</div>}
+
+			{temporal && <Modal title="Contraseña temporal generada" onClose={() => setTemporal(null)}>
+				<p>
+					Entrega esta contraseña al usuario <strong>{temporal.username}</strong>.
+				</p>
+				<div className="temporary-password">{temporal.passwordTemporal}</div>
+				<p className="module-subtitle">
+					Válida durante 24 horas. Expira el {new Date(temporal.expiraEn).toLocaleString()}.
+				</p>
+				<div className="form-footer">
+					<button type="button" className="primary-btn" onClick={() => navigator.clipboard?.writeText(temporal.passwordTemporal)}>
+						Copiar contraseña
+					</button>
+				</div>
+			</Modal>}
 
 			{open && <Modal title="Crear usuario" onClose={() => setOpen(false)}>
 				<form onSubmit={submit}>
@@ -147,6 +227,17 @@ export default function UsuariosPage() {
 			</Modal>}
 
 			<div className="card-panel" style={{ marginTop: 20 }}>
+				<div className="toolbar"><strong>{usuariosFiltrados.length} de {users.length} usuarios</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Usuario, nombre o documento..."
+					filters={[
+						{name: "rol", label: "Rol", type: "select", value: filtros.rol, onChange: (value) => setFiltros({ ...filtros, rol: value }), options: roles.map((x) => ({ value: x.id, label: x.nombre }))},
+						{name: "estado", label: "Estado", type: "select", value: filtros.estado, onChange: (value) => setFiltros({ ...filtros, estado: value }), options: [{ value: "activo", label: "Activos" }, { value: "inactivo", label: "Inactivos" }]},
+					]}
+					onClear={() => { setSearch(""); setFiltros({ rol: "", estado: "" }); }}
+				/>
 				<div className="table-wrap">
 					<table className="module-table">
 						<thead>
@@ -155,10 +246,11 @@ export default function UsuariosPage() {
 								<th>Persona</th>
 								<th>Rol</th>
 								<th>Estado</th>
+								<th>Acción</th>
 							</tr>
 						</thead>
 						<tbody>
-							{users.map((u) => (
+							{usuariosFiltrados.map((u) => (
 								<tr key={u.id}>
 									<td>{u.username}</td>
 									<td>
@@ -166,9 +258,29 @@ export default function UsuariosPage() {
 									</td>
 									<td>{u.rol?.nombre}</td>
 									<td>
-										<span className="badge badge-success">
+										<span className={`badge ${usuarioEstaActivo(u) ? "badge-success" : "badge-danger"}`}>
 											{u.estadoUsuario?.nombre}
 										</span>
+									</td>
+									<td>
+										<div className="module-actions">
+											<button
+												type="button"
+													className={usuarioEstaActivo(u) ? "danger-btn" : "secondary-btn"}
+												disabled={cambiandoEstadoId === u.id}
+												onClick={() => cambiarEstado(u)}
+											>
+													{textoEstado(u, cambiandoEstadoId === u.id)}
+											</button>
+											<button
+												type="button"
+												className="secondary-btn"
+												disabled={generandoId === u.id}
+												onClick={() => generarTemporal(u)}
+											>
+													{generandoId === u.id ? "Generando..." : "Generar contraseña"}
+											</button>
+										</div>
 									</td>
 								</tr>
 							))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	asignacionesApi,
 	apartamentosApi,
@@ -23,6 +24,8 @@ export default function AsignacionesPage() {
 	const [form, setForm] = useState(initial);
 	const [error, setError] = useState("");
 	const [showModal, setShowModal] = useState(false);
+	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ tipo: "", estado: "" });
 
 	const load = () =>
 		asignacionesApi.list().then(setItems).catch((e) => setError(e.message));
@@ -78,6 +81,14 @@ export default function AsignacionesPage() {
 			}
 		}
 	};
+
+	const filtered = items.filter((x) => {
+		const texto = `${x.apartamento?.torre?.nombreTorre} ${x.apartamento?.numeroApartamento} ${x.persona?.nombres} ${x.persona?.apellidos} ${x.persona?.numeroDocumento}`.toLowerCase();
+		const vigente = !x.fechaSalida;
+		return texto.includes(search.toLowerCase())
+			&& (!filters.tipo || String(x.tipoResidente?.id) === filters.tipo)
+			&& (!filters.estado || (filters.estado === "vigente" ? vigente : !vigente));
+	});
 
 	return (
 		<div className="module-page">
@@ -189,6 +200,17 @@ export default function AsignacionesPage() {
 			)}
 
 			<div className="card-panel" style={{ marginTop: 20 }}>
+				<div className="toolbar"><strong>{filtered.length} de {items.length} asignaciones</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Torre, apartamento, persona o documento..."
+					filters={[
+						{name: "tipo", label: "Tipo", type: "select", value: filters.tipo, onChange: (value) => setFilters({ ...filters, tipo: value }), options: tipos.map((x) => ({ value: x.id, label: x.nombre }))},
+						{name: "estado", label: "Vigencia", type: "select", value: filters.estado, onChange: (value) => setFilters({ ...filters, estado: value }), options: [{ value: "vigente", label: "Vigentes" }, { value: "finalizada", label: "Finalizadas" }]},
+					]}
+					onClear={() => { setSearch(""); setFilters({ tipo: "", estado: "" }); }}
+				/>
 				<div className="table-wrap">
 					<table className="module-table">
 						<thead>
@@ -202,8 +224,8 @@ export default function AsignacionesPage() {
 							</tr>
 						</thead>
 						<tbody>
-							{items.length ? (
-								items.map((x, i) => (
+							{filtered.length ? (
+								filtered.map((x, i) => (
 									<tr key={`${x.apartamento?.id}-${x.persona?.id}-${i}`}>
 										<td>
 											{x.apartamento?.torre?.nombreTorre} - {x.apartamento?.numeroApartamento}

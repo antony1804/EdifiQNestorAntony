@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import { getPersonas, crearPersona, actualizarPersona, getTiposDocumento } from "../../api";
+import {
+  isValidDocumentNumber,
+  isValidEmail,
+  isValidName,
+  isValidPhone,
+  normalizeText,
+  onlyLetters,
+  onlyNumbers,
+} from "../../utils/validation";
 import "../vigilante.css";
 import "../../styles/modules.css";
 
@@ -21,6 +31,8 @@ function PersonaPages() {
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const [filtros, setFiltros] = useState({ tipoDocumento: "", estado: "" });
+  const [errorForm, setErrorForm] = useState("");
 
   const cargar = () => getPersonas().then(setPersonas);
   const cargarTipos = () => getTiposDocumento().then(setTiposDocumento);
@@ -32,35 +44,78 @@ function PersonaPages() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    let nextValue = type === "checkbox" ? checked : value;
+
+    if (name === "numeroDocumento" || name === "telefono") {
+      nextValue = onlyNumbers(value);
+    }
+
+    if (name === "nombres" || name === "apellidos") {
+      nextValue = onlyLetters(value);
+    }
+
+    setForm({ ...form, [name]: nextValue });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorForm("");
 
-    // El backend valida numeroDocumento/nombres/apellidos/tipoDocumento como
-    // obligatorios en el PUT, así que siempre se reenvían. En edición esos
-    // campos están bloqueados en la UI (disabled/readOnly), así que viajan
-    // sin cambios; el admin solo puede modificar correo, teléfono y activo.
+    const idTipoDocumento = Number(form.idTipoDocumento);
+    const numeroDocumento = normalizeText(form.numeroDocumento);
+    const nombres = normalizeText(form.nombres);
+    const apellidos = normalizeText(form.apellidos);
+    const correo = normalizeText(form.correo);
+    const telefono = normalizeText(form.telefono);
+
+    if (!idTipoDocumento) {
+      setErrorForm("Debes seleccionar un tipo de documento.");
+      return;
+    }
+
+    if (!isValidDocumentNumber(numeroDocumento)) {
+      setErrorForm("El número de documento es obligatorio y debe tener entre 6 y 20 dígitos.");
+      return;
+    }
+
+    if (!isValidName(nombres) || !isValidName(apellidos)) {
+      setErrorForm("Nombres y apellidos son obligatorios y solo pueden contener letras.");
+      return;
+    }
+
+    if (correo && !isValidEmail(correo)) {
+      setErrorForm("El correo electrónico no tiene un formato válido.");
+      return;
+    }
+
+    if (telefono && !isValidPhone(telefono)) {
+      setErrorForm("El teléfono debe contener solo números y tener entre 7 y 20 dígitos.");
+      return;
+    }
+
     const payload = {
-      tipoDocumento: { id: form.idTipoDocumento },
-      numeroDocumento: form.numeroDocumento,
-      nombres: form.nombres,
-      apellidos: form.apellidos,
-      correo: form.correo,
-      telefono: form.telefono,
+      tipoDocumento: { id: idTipoDocumento },
+      numeroDocumento,
+      nombres,
+      apellidos,
+      correo: correo || null,
+      telefono: telefono || null,
       activo: form.activo,
     };
 
-    if (editId) {
-      await actualizarPersona(editId, payload);
-      setEditId(null);
-    } else {
-      await crearPersona(payload);
+    try {
+      if (editId) {
+        await actualizarPersona(editId, payload);
+        setEditId(null);
+      } else {
+        await crearPersona(payload);
+      }
+      setForm(initialForm);
+      cargar();
+      setShowModal(false);
+    } catch (err) {
+      setErrorForm(err?.message || "No se pudo guardar la persona.");
     }
-    setForm(initialForm);
-    cargar();
-    setShowModal(false);
   };
 
   const abrirNuevo = () => {
@@ -86,6 +141,7 @@ function PersonaPages() {
   const cerrarModal = () => {
     setShowModal(false);
     setEditId(null);
+    setErrorForm("");
     setForm(initialForm);
   };
 
@@ -110,7 +166,9 @@ function PersonaPages() {
   const personasFiltradas = personas.filter((p) => {
     const texto = `${p.numeroDocumento} ${p.nombres} ${p.apellidos} ${p.correo || ""} ${p.telefono || ""}`
       .toLowerCase();
-    return texto.includes(busqueda.toLowerCase());
+    return texto.includes(busqueda.toLowerCase())
+      && (!filtros.tipoDocumento || String(p.tipoDocumento?.id) === filtros.tipoDocumento)
+      && (!filtros.estado || String(Boolean(p.activo)) === filtros.estado);
   });
 
   const tipoDocumentoSeleccionado = tiposDocumento.find(
@@ -130,15 +188,17 @@ function PersonaPages() {
         </button>
       </div>
 
-      <div className="toolbar personas-toolbar">
-        <strong>{personasFiltradas.length} personas</strong>
-        <input
-          className="search-input"
-          placeholder="Buscar por nombre, apellido, documento, correo o teléfono..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-      </div>
+      <div className="toolbar personas-toolbar"><strong>{personasFiltradas.length} personas</strong></div>
+      <MultiCriteriaBar
+        search={busqueda}
+        onSearch={setBusqueda}
+        searchPlaceholder="Nombre, documento, correo o teléfono..."
+        filters={[
+          { name: "tipoDocumento", label: "Tipo documento", type: "select", value: filtros.tipoDocumento, onChange: (value) => setFiltros({ ...filtros, tipoDocumento: value }), options: tiposDocumento.map((x) => ({ value: x.id, label: x.nombre })) },
+          { name: "estado", label: "Estado", type: "select", value: filtros.estado, onChange: (value) => setFiltros({ ...filtros, estado: value }), options: [{ value: "true", label: "Activo" }, { value: "false", label: "Inactivo" }] },
+        ]}
+        onClear={() => { setBusqueda(""); setFiltros({ tipoDocumento: "", estado: "" }); }}
+      />
 
       <div className="personas-table-wrap">
       <table className="personas-table">
@@ -198,6 +258,8 @@ function PersonaPages() {
                 Los datos de identidad (documento y nombre) no se pueden modificar. Solo puedes actualizar el contacto y el estado.
               </p>
             )}
+
+            {errorForm && <div className="form-error">{errorForm}</div>}
 
             <div className="form-group">
               <label htmlFor="idTipoDocumento">Tipo de documento</label>

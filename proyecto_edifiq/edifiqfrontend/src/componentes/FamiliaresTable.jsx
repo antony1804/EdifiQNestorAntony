@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { actualizarPersona, eliminarFamiliar } from "../api";
 import Modal from "./Modal";
+import MultiCriteriaBar from "./MultiCriteriaBar";
 
 export default function FamiliaresTable({
 	idApartamento,
@@ -12,6 +13,7 @@ export default function FamiliaresTable({
 	const [form, setForm] = useState(null);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState("");
+	const [search, setSearch] = useState("");
 
 	const abrirEdicion = (fam) => {
 		setError("");
@@ -65,9 +67,12 @@ export default function FamiliaresTable({
 		}
 	};
 
+	const filtrados = familiares.filter((familiar) => `${familiar.persona.numeroDocumento} ${familiar.persona.nombres} ${familiar.persona.apellidos} ${familiar.persona.telefono || ""} ${familiar.persona.correo || ""}`.toLowerCase().includes(search.toLowerCase()));
+
 	return (
 		<>
 			{error && !editando && <div className="form-error">{error}</div>}
+			<MultiCriteriaBar search={search} onSearch={setSearch} searchPlaceholder="Nombre, documento, teléfono o correo..." onClear={() => setSearch("")} />
 			<table className="module-table">
 				<thead>
 					<tr>
@@ -81,8 +86,8 @@ export default function FamiliaresTable({
 					</tr>
 				</thead>
 				<tbody>
-					{familiares.length ? (
-						familiares.map((f) => (
+					{filtrados.length ? (
+						filtrados.map((f) => (
 							<tr key={f.persona.id}>
 								<td>{f.persona.numeroDocumento}</td>
 								<td>{f.persona.nombres}</td>

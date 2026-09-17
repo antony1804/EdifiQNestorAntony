@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { getTiposDocumento, personasApi, actualizarPerfilUsuario } from "../api";
-import { onlyLetters, onlyNumbers } from "../utils/validation";
+import {
+	onlyLetters,
+	onlyNumbers,
+	isValidDocumentNumber,
+	isValidEmail,
+	isValidName,
+	isValidPassword,
+	isValidPhone,
+	normalizeText,
+} from "../utils/validation";
 import "../styles/modules.css";
 
 export default function PerfilPage() {
@@ -31,19 +40,22 @@ export default function PerfilPage() {
 
 	useEffect(() => {
 		getTiposDocumento().then(setTiposDocumento);
-		if (user?.persona) {
-			setDatos({
-				tipoDocumentoId: user.persona.tipoDocumento?.id ?? "",
-				numeroDocumento: user.persona.numeroDocumento ?? "",
-				nombres: user.persona.nombres ?? "",
-				apellidos: user.persona.apellidos ?? "",
-				telefono: user.persona.telefono ?? "",
-				correo: user.persona.correo ?? "",
-			});
-		}
-		setCuenta((c) => ({ ...c, username: user?.username ?? "" }));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		const sincronizarUsuario = () => {
+			if (user?.persona) {
+				setDatos({
+					tipoDocumentoId: user.persona.tipoDocumento?.id ?? "",
+					numeroDocumento: user.persona.numeroDocumento ?? "",
+					nombres: user.persona.nombres ?? "",
+					apellidos: user.persona.apellidos ?? "",
+					telefono: user.persona.telefono ?? "",
+					correo: user.persona.correo ?? "",
+				});
+			}
+			setCuenta((c) => ({ ...c, username: user?.username ?? "" }));
+		};
+		const timeoutId = setTimeout(sincronizarUsuario, 0);
+		return () => clearTimeout(timeoutId);
+	}, [user?.persona, user?.username]);
 
 	if (!user) {
 		return (
@@ -57,14 +69,39 @@ export default function PerfilPage() {
 		e.preventDefault();
 		setErrorDatos("");
 		setOkDatos("");
+
+		const tipoDocumentoId = Number(datos.tipoDocumentoId);
+		const numeroDocumento = normalizeText(datos.numeroDocumento);
+		const nombres = normalizeText(datos.nombres);
+		const apellidos = normalizeText(datos.apellidos);
+		const telefono = normalizeText(datos.telefono);
+		const correo = normalizeText(datos.correo);
+
+		if (!tipoDocumentoId || !isValidDocumentNumber(numeroDocumento)) {
+			setErrorDatos("Ingresa un número de documento válido.");
+			return;
+		}
+		if (!isValidName(nombres) || !isValidName(apellidos)) {
+			setErrorDatos("Nombres y apellidos son obligatorios y solo pueden contener letras.");
+			return;
+		}
+		if (!isValidPhone(telefono)) {
+			setErrorDatos("El teléfono debe tener entre 7 y 20 números.");
+			return;
+		}
+		if (correo && !isValidEmail(correo)) {
+			setErrorDatos("El correo electrónico no tiene un formato válido.");
+			return;
+		}
+
 		try {
 			const p = {
-				tipoDocumento: { id: Number(datos.tipoDocumentoId) },
-				numeroDocumento: datos.numeroDocumento.trim(),
-				nombres: datos.nombres.trim(),
-				apellidos: datos.apellidos.trim(),
-				telefono: datos.telefono.trim(),
-				correo: datos.correo.trim(),
+				tipoDocumento: { id: tipoDocumentoId },
+				numeroDocumento,
+				nombres,
+				apellidos,
+				telefono: telefono || null,
+				correo: correo || null,
 				activo: user.persona.activo,
 			};
 			const actualizada = await personasApi.update(user.persona.id, p);
@@ -82,16 +119,37 @@ export default function PerfilPage() {
 		setErrorCuenta("");
 		setOkCuenta("");
 
-		if (cuenta.passwordNueva && cuenta.passwordNueva !== cuenta.confirmarPassword) {
+		const username = normalizeText(cuenta.username);
+		const passwordActual = normalizeText(cuenta.passwordActual);
+		const passwordNueva = normalizeText(cuenta.passwordNueva);
+		const confirmarPassword = normalizeText(cuenta.confirmarPassword);
+
+		if (!username || username.length < 4) {
+			setErrorCuenta("El usuario debe tener al menos 4 caracteres.");
+			return;
+		}
+		if (!passwordActual) {
+			setErrorCuenta("Debes ingresar tu contraseña actual.");
+			return;
+		}
+		if (passwordNueva && !isValidPassword(passwordNueva, 6)) {
+			setErrorCuenta("La nueva contraseña debe tener al menos 6 caracteres.");
+			return;
+		}
+		if (passwordNueva && passwordNueva !== confirmarPassword) {
 			setErrorCuenta("Las contraseñas nuevas no coinciden.");
+			return;
+		}
+		if (passwordNueva && !confirmarPassword) {
+			setErrorCuenta("Debes confirmar la nueva contraseña.");
 			return;
 		}
 
 		try {
 			const actualizado = await actualizarPerfilUsuario(user.id, {
-				username: cuenta.username.trim(),
-				passwordActual: cuenta.passwordActual,
-				passwordNueva: cuenta.passwordNueva || null,
+				username,
+				passwordActual,
+				passwordNueva: passwordNueva || null,
 			});
 			const nuevoUser = { ...user, username: actualizado.username };
 			localStorage.setItem("authUser", JSON.stringify(nuevoUser));
@@ -127,8 +185,9 @@ export default function PerfilPage() {
 				<form onSubmit={guardarDatos}>
 					<div className="form-grid">
 						<div className="form-group">
-							<label>Tipo de documento</label>
+							<label htmlFor="perfil-tipo-documento">Tipo de documento</label>
 							<select
+								id="perfil-tipo-documento"
 								required
 								value={datos.tipoDocumentoId}
 								onChange={(e) =>
@@ -145,8 +204,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Número de documento</label>
+							<label htmlFor="perfil-numero-documento">Número de documento</label>
 							<input
+								id="perfil-numero-documento"
 								required
 								maxLength="20"
 								inputMode="numeric"
@@ -158,8 +218,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Nombres</label>
+							<label htmlFor="perfil-nombres">Nombres</label>
 							<input
+								id="perfil-nombres"
 								required
 								maxLength="100"
 								value={datos.nombres}
@@ -168,8 +229,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Apellidos</label>
+							<label htmlFor="perfil-apellidos">Apellidos</label>
 							<input
+								id="perfil-apellidos"
 								required
 								maxLength="100"
 								value={datos.apellidos}
@@ -180,8 +242,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Teléfono</label>
+							<label htmlFor="perfil-telefono">Teléfono</label>
 							<input
+								id="perfil-telefono"
 								maxLength="20"
 								inputMode="numeric"
 								value={datos.telefono}
@@ -190,8 +253,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Correo</label>
+							<label htmlFor="perfil-correo">Correo</label>
 							<input
+								id="perfil-correo"
 								type="email"
 								maxLength="100"
 								value={datos.correo}
@@ -201,7 +265,7 @@ export default function PerfilPage() {
 					</div>
 
 					<div className="form-footer">
-						<button className="primary-btn">Guardar datos</button>
+						<button type="submit" className="primary-btn">Guardar datos</button>
 					</div>
 				</form>
 			</div>
@@ -213,8 +277,9 @@ export default function PerfilPage() {
 				<form onSubmit={guardarCuenta}>
 					<div className="form-grid">
 						<div className="form-group">
-							<label>Usuario</label>
+							<label htmlFor="perfil-usuario">Usuario</label>
 							<input
+								id="perfil-usuario"
 								required
 								minLength="4"
 								maxLength="50"
@@ -224,8 +289,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Contraseña actual</label>
+							<label htmlFor="perfil-password-actual">Contraseña actual</label>
 							<input
+								id="perfil-password-actual"
 								required
 								type="password"
 								value={cuenta.passwordActual}
@@ -234,8 +300,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Nueva contraseña (opcional)</label>
+							<label htmlFor="perfil-password-nueva">Nueva contraseña (opcional)</label>
 							<input
+								id="perfil-password-nueva"
 								type="password"
 								minLength="6"
 								value={cuenta.passwordNueva}
@@ -244,8 +311,9 @@ export default function PerfilPage() {
 						</div>
 
 						<div className="form-group">
-							<label>Confirmar nueva contraseña</label>
+							<label htmlFor="perfil-password-confirmar">Confirmar nueva contraseña</label>
 							<input
+								id="perfil-password-confirmar"
 								type="password"
 								minLength="6"
 								value={cuenta.confirmarPassword}
@@ -262,7 +330,7 @@ export default function PerfilPage() {
 					</p>
 
 					<div className="form-footer">
-						<button className="primary-btn">Guardar cambios</button>
+						<button type="submit" className="primary-btn">Guardar cambios</button>
 					</div>
 				</form>
 			</div>

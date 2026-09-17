@@ -1,6 +1,10 @@
 package com.antony.edifiq.controller;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -36,6 +40,14 @@ import com.antony.edifiq.repository.UsuarioRepository;
     }
 )
 public class UsuarioController {
+
+    private static final String USER_NOT_FOUND = "Usuario no encontrado";
+    private static final ZoneId SYSTEM_ZONE = ZoneId.systemDefault();
+    private static final long TEMPORARY_PASSWORD_HOURS = 24;
+
+    private static final String TEMPORARY_PASSWORD_CHARACTERS =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    private final SecureRandom secureRandom = new SecureRandom();
 
     private final UsuarioRepository repo;
     private final PersonaRepository personaRepo;
@@ -135,6 +147,43 @@ public class UsuarioController {
         return ResponseEntity.ok(repo.save(usuario));
     }
 
+    @PostMapping("/{id}/password-temporal")
+    public ResponseEntity<Map<String, String>> generarPasswordTemporal(@PathVariable Long id) {
+        Usuario usuario = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+
+        String passwordTemporal = crearPasswordTemporal();
+        usuario.setPassword(passwordTemporal);
+        usuario.setPasswordTemporalExpira(ahora().plusHours(TEMPORARY_PASSWORD_HOURS));
+        repo.save(usuario);
+
+        return ResponseEntity.ok(Map.of(
+                "username", usuario.getUsername(),
+            "passwordTemporal", passwordTemporal,
+            "expiraEn", usuario.getPasswordTemporalExpira().toString()));
+    }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Map<String, String>> cambiarEstado(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> solicitud) {
+        Usuario usuario = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+        Boolean activar = solicitud.get("activo");
+        if (activar == null) {
+            throw new IllegalArgumentException("El campo activo es obligatorio");
+        }
+
+        String nombreEstado = activar ? "Activo" : "Inactivo";
+        EstadoUsuario estado = estadoRepo.findByNombreIgnoreCase(nombreEstado)
+                .orElseThrow(() -> new IllegalStateException(
+                        "El estado de usuario '" + nombreEstado + "' no está configurado"));
+        usuario.setEstadoUsuario(estado);
+        repo.save(usuario);
+
+        return ResponseEntity.ok(Map.of("estado", estado.getNombre()));
+    }
+
     // Autoservicio: el propio usuario cambia su username y/o contraseña.
     // El rol NUNCA se toca aquí (ni siquiera se recibe en el DTO).
     @PutMapping("/{id}/perfil")
@@ -143,7 +192,7 @@ public class UsuarioController {
             @RequestBody ActualizarPerfilDTO dto) {
 
         Usuario u = repo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+            .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
 
         if (dto.getPasswordActual() == null
                 || !dto.getPasswordActual().equals(u.getPassword())) {
@@ -173,6 +222,7 @@ public class UsuarioController {
                         "La nueva contraseña debe tener al menos 6 caracteres");
             }
             u.setPassword(dto.getPasswordNueva());
+            u.setPasswordTemporalExpira(null);
         }
 
         return ResponseEntity.ok(repo.save(u));
@@ -183,11 +233,38 @@ public class UsuarioController {
     public ResponseEntity<Usuario> login(
             @RequestBody Usuario credenciales) {
 
-        return repo.findByUsernameAndPassword(
-                credenciales.getUsername(),
-                credenciales.getPassword()
-        )
-        .map(ResponseEntity::ok)
-        .orElse(ResponseEntity.status(401).build());
+        Usuario usuario = repo.findByUsername(credenciales.getUsername()).orElse(null);
+        if (usuario != null && usuario.getEstadoUsuario() != null
+                && "inactivo".equalsIgnoreCase(usuario.getEstadoUsuario().getNombre())) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (usuario == null
+                || !usuario.getPassword().equals(credenciales.getPassword())
+                || !passwordVigente(usuario)
+                || usuario.getEstadoUsuario() == null
+                || !"activo".equalsIgnoreCase(usuario.getEstadoUsuario().getNombre())) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    private boolean passwordVigente(Usuario usuario) {
+        return usuario.getPasswordTemporalExpira() == null
+                || usuario.getPasswordTemporalExpira().isAfter(ahora());
+    }
+
+    private LocalDateTime ahora() {
+        return LocalDateTime.now(SYSTEM_ZONE);
+    }
+
+    private String crearPasswordTemporal() {
+        StringBuilder password = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            password.append(TEMPORARY_PASSWORD_CHARACTERS.charAt(
+                    secureRandom.nextInt(TEMPORARY_PASSWORD_CHARACTERS.length())));
+        }
+        return password.toString();
     }
 }

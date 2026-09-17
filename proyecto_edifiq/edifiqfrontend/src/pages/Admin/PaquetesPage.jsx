@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	paquetesApi,
 	apartamentosApi,
@@ -29,6 +30,7 @@ export default function PaquetesPage() {
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ estado: "", torre: "", desde: "", hasta: "" });
 
 	const load = () =>
 		paquetesApi.list().then(setItems).catch((e) => setError(e.message));
@@ -101,11 +103,15 @@ export default function PaquetesPage() {
 		}
 	};
 
-	const filtered = items.filter((x) =>
-		`${x.descripcion} ${x.remitente} ${x.apartamento?.numeroApartamento}`
-			.toLowerCase()
-			.includes(search.toLowerCase()),
-	);
+	const filtered = items.filter((x) => {
+		const fecha = x.fechaRecepcion?.slice(0, 10) || "";
+		const texto = `${x.descripcion} ${x.remitente} ${x.apartamento?.numeroApartamento} ${x.apartamento?.torre?.nombreTorre}`.toLowerCase();
+		return texto.includes(search.toLowerCase())
+			&& (!filters.estado || x.estadoPaquete?.id === Number(filters.estado))
+			&& (!filters.torre || String(x.apartamento?.torre?.id) === filters.torre)
+			&& (!filters.desde || fecha >= filters.desde)
+			&& (!filters.hasta || fecha <= filters.hasta);
+	});
 
 	return (
 		<div className="module-page">
@@ -133,15 +139,19 @@ export default function PaquetesPage() {
 			</div>
 
 			<div className="card-panel">
-				<div className="toolbar">
-					<strong>{items.length} paquetes</strong>
-					<input
-						className="search-input"
-						placeholder="Buscar..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
-				</div>
+				<div className="toolbar"><strong>{filtered.length} de {items.length} paquetes</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Descripción, remitente, apartamento o torre..."
+					filters={[
+						{name: "estado", label: "Estado", type: "select", value: filters.estado, onChange: (value) => setFilters({ ...filters, estado: value }), options: estados.map((x) => ({ value: x.id, label: x.nombre }))},
+						{name: "torre", label: "Torre", type: "select", value: filters.torre, onChange: (value) => setFilters({ ...filters, torre: value }), options: [...new Map(apts.map((x) => [x.torre?.id, x.torre])).values()].filter(Boolean).map((x) => ({ value: x.id, label: x.nombreTorre }))},
+						{name: "desde", label: "Recibido desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+						{name: "hasta", label: "Recibido hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+					]}
+					onClear={() => { setSearch(""); setFilters({ estado: "", torre: "", desde: "", hasta: "" }); }}
+				/>
 
 				<div className="table-wrap">
 					<table className="module-table">

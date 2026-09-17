@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import { recibosApi, apartamentosApi, getTiposServicio } from "../../api";
 import { onlyDecimal } from "../../utils/validation";
 import "../../styles/modules.css";
@@ -34,6 +35,7 @@ export default function VigilanteRecibosPage() {
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ servicio: "", torre: "", desde: "", hasta: "" });
 
 	const load = () =>
 		recibosApi.list().then(setItems).catch((e) => setError(e.message));
@@ -68,10 +70,14 @@ export default function VigilanteRecibosPage() {
 
 	const filtered = items
 		.filter((x) =>
-			`${x.periodo} ${x.tipoServicio?.nombre} ${x.apartamento?.numeroApartamento}`
+			`${x.periodo} ${x.tipoServicio?.nombre} ${x.apartamento?.numeroApartamento} ${x.apartamento?.torre?.nombreTorre}`
 				.toLowerCase()
 				.includes(search.toLowerCase()),
 		)
+		.filter((x) => !filters.servicio || String(x.tipoServicio?.id) === filters.servicio)
+		.filter((x) => !filters.torre || String(x.apartamento?.torre?.id) === filters.torre)
+		.filter((x) => !filters.desde || x.fechaVencimiento >= filters.desde)
+		.filter((x) => !filters.hasta || x.fechaVencimiento <= filters.hasta)
 		.sort((a, b) => new Date(b.fechaEmision) - new Date(a.fechaEmision));
 
 	return (
@@ -98,11 +104,17 @@ export default function VigilanteRecibosPage() {
 			<div className="card-panel">
 				<div className="toolbar">
 					<strong>{filtered.length} recibos</strong>
-					<input
-						className="search-input"
-						placeholder="Buscar..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+					<MultiCriteriaBar
+						search={search}
+						onSearch={setSearch}
+						searchPlaceholder="Periodo, servicio, apartamento o torre..."
+						filters={[
+							{name: "servicio", label: "Servicio", type: "select", value: filters.servicio, onChange: (value) => setFilters({ ...filters, servicio: value }), options: servicios.map((x) => ({ value: x.id, label: x.nombre }))},
+							{name: "torre", label: "Torre", type: "select", value: filters.torre, onChange: (value) => setFilters({ ...filters, torre: value }), options: [...new Map(apts.map((x) => [x.torre?.id, x.torre])).values()].filter(Boolean).map((x) => ({ value: x.id, label: x.nombreTorre }))},
+							{name: "desde", label: "Vence desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+							{name: "hasta", label: "Vence hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+						]}
+						onClear={() => { setSearch(""); setFilters({ servicio: "", torre: "", desde: "", hasta: "" }); }}
 					/>
 				</div>
 

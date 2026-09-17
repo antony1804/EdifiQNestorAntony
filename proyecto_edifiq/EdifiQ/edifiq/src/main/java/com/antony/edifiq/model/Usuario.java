@@ -31,6 +31,9 @@ public class Usuario {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "password_temporal_expira")
+    private LocalDateTime passwordTemporalExpira;
+
     @ManyToOne
     @JoinColumn(name = "id_estado_usuario", nullable = false)
     private EstadoUsuario estadoUsuario;
@@ -71,6 +74,14 @@ public class Usuario {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public LocalDateTime getPasswordTemporalExpira() {
+        return passwordTemporalExpira;
+    }
+
+    public void setPasswordTemporalExpira(LocalDateTime passwordTemporalExpira) {
+        this.passwordTemporalExpira = passwordTemporalExpira;
     }
 
     public EstadoUsuario getEstadoUsuario() {

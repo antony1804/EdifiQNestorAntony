@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../Login.css";
 import { loginUsuario } from "../api";
+import { isValidPassword, isValidUsername, normalizeText } from "../utils/validation";
 
 function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -16,8 +17,16 @@ function LoginPage() {
     e.preventDefault();
     setError("");
 
+    const username = normalizeText(form.username);
+    const password = normalizeText(form.password);
+
+    if (!isValidUsername(username, 3) || !isValidPassword(password, 6)) {
+      setError("Ingresa un usuario y una contraseña válidos.");
+      return;
+    }
+
     try {
-      const usuario = await loginUsuario(form);
+      const usuario = await loginUsuario({ username, password });
 
       localStorage.setItem("authUser", JSON.stringify(usuario));
 
@@ -33,8 +42,10 @@ function LoginPage() {
         setError("El usuario no tiene un rol válido");
       }
 
-    } catch {
-      setError("Usuario o contraseña incorrectos");
+    } catch (requestError) {
+      setError(requestError.status === 404
+        ? "Usuario no encontrado"
+        : "Usuario o contraseña incorrectos");
     }
   };
 

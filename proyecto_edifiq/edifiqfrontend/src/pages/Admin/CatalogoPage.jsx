@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import { lettersPattern, onlyLetters, onlyNumbers, numbersPattern } from "../../utils/validation";
 import "../../styles/modules.css";
 
@@ -22,6 +23,7 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
     const [editId, setEditId] = useState(null);
     const [open, setOpen] = useState(false);
     const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
 
     const load = useCallback(() => api.list().then(setItems).catch((e) => setError(e.message)), [api]);
 
@@ -67,6 +69,12 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
         }
     };
 
+    const filtered = items.filter((item) => fields
+        .map((field) => item[field.name] ?? "")
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase()));
+
     return (
         <div className="module-page">
             <div className="module-header">
@@ -88,6 +96,13 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
             </div>
 
             <div className="card-panel">
+                <div className="toolbar"><strong>{filtered.length} de {items.length} registros</strong></div>
+                <MultiCriteriaBar
+                    search={search}
+                    onSearch={setSearch}
+                    searchPlaceholder="Buscar por nombre o descripción..."
+                    onClear={() => setSearch("")}
+                />
                 <div className="table-wrap">
                     <table className="module-table">
                         <thead>
@@ -99,8 +114,8 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {items.length ? (
-                                items.map((x) => (
+                            {filtered.length ? (
+                                filtered.map((x) => (
                                     <tr key={x.id}>
                                         {fields.map((f) => (
                                             <td key={f.name}>{x[f.name]}</td>

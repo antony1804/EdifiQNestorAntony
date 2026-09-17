@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	visitasApi,
 	apartamentosApi,
@@ -36,6 +37,7 @@ export default function VigilanteVisitasPage() {
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
 	const [soloActivas, setSoloActivas] = useState(true);
+	const [filters, setFilters] = useState({ tipo: "", torre: "", desde: "", hasta: "" });
 
 	const load = () =>
 		visitasApi.list().then(setItems).catch((e) => setError(e.message));
@@ -85,10 +87,14 @@ export default function VigilanteVisitasPage() {
 	const filtered = items
 		.filter((x) => (soloActivas ? esActiva(x) : true))
 		.filter((x) =>
-			`${x.nombreVisitante} ${x.documentoVisitante} ${x.apartamento?.numeroApartamento}`
+			`${x.nombreVisitante} ${x.documentoVisitante} ${x.apartamento?.numeroApartamento} ${x.apartamento?.torre?.nombreTorre}`
 				.toLowerCase()
 				.includes(search.toLowerCase()),
 		)
+		.filter((x) => !filters.tipo || String(x.tipoVisita?.id) === filters.tipo)
+		.filter((x) => !filters.torre || String(x.apartamento?.torre?.id) === filters.torre)
+		.filter((x) => !filters.desde || x.fechaIngreso?.slice(0, 10) >= filters.desde)
+		.filter((x) => !filters.hasta || x.fechaIngreso?.slice(0, 10) <= filters.hasta)
 		.sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso));
 
 	return (
@@ -124,11 +130,17 @@ export default function VigilanteVisitasPage() {
 						/>
 						<span>Solo activas</span>
 					</label>
-					<input
-						className="search-input"
-						placeholder="Buscar visitante o apartamento..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+					<MultiCriteriaBar
+						search={search}
+						onSearch={setSearch}
+						searchPlaceholder="Visitante, documento, apartamento o torre..."
+						filters={[
+							{name: "tipo", label: "Tipo", type: "select", value: filters.tipo, onChange: (value) => setFilters({ ...filters, tipo: value }), options: tipos.map((x) => ({ value: x.id, label: x.nombre }))},
+							{name: "torre", label: "Torre", type: "select", value: filters.torre, onChange: (value) => setFilters({ ...filters, torre: value }), options: [...new Map(apts.map((x) => [x.torre?.id, x.torre])).values()].filter(Boolean).map((x) => ({ value: x.id, label: x.nombreTorre }))},
+							{name: "desde", label: "Ingreso desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+							{name: "hasta", label: "Ingreso hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+						]}
+						onClear={() => { setSearch(""); setFilters({ tipo: "", torre: "", desde: "", hasta: "" }); }}
 					/>
 				</div>
 

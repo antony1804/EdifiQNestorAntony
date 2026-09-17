@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	recibosApi,
 	apartamentosApi,
@@ -45,6 +46,7 @@ export default function RecibosPage() {
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ servicio: "", estado: "", torre: "", desde: "", hasta: "", valorMin: "" });
 
 	const load = () =>
 		recibosApi.list().then(setItems).catch((e) => setError(e.message));
@@ -137,11 +139,16 @@ export default function RecibosPage() {
 		}
 	};
 
-	const filtered = items.filter((x) =>
-		`${x.periodo} ${x.tipoServicio?.nombre} ${x.apartamento?.numeroApartamento}`
-			.toLowerCase()
-			.includes(search.toLowerCase()),
-	);
+	const filtered = items.filter((x) => {
+		const texto = `${x.periodo} ${x.tipoServicio?.nombre} ${x.apartamento?.numeroApartamento} ${x.apartamento?.torre?.nombreTorre}`.toLowerCase();
+		return texto.includes(search.toLowerCase())
+			&& (!filters.servicio || String(x.tipoServicio?.id) === filters.servicio)
+			&& (!filters.estado || String(x.estadoRecibo?.id) === filters.estado)
+			&& (!filters.torre || String(x.apartamento?.torre?.id) === filters.torre)
+			&& (!filters.desde || x.fechaVencimiento >= filters.desde)
+			&& (!filters.hasta || x.fechaVencimiento <= filters.hasta)
+			&& (!filters.valorMin || Number(x.valor) >= Number(filters.valorMin));
+	});
 
 	return (
 		<div className="module-page">
@@ -187,15 +194,21 @@ export default function RecibosPage() {
 
 			{tab === "todos" && (
 				<div className="card-panel">
-					<div className="toolbar">
-						<strong>{items.length} recibos</strong>
-						<input
-							className="search-input"
-							placeholder="Buscar recibo..."
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-						/>
-					</div>
+					<div className="toolbar"><strong>{filtered.length} de {items.length} recibos</strong></div>
+					<MultiCriteriaBar
+						search={search}
+						onSearch={setSearch}
+						searchPlaceholder="Periodo, servicio, apartamento o torre..."
+						filters={[
+							{name: "servicio", label: "Servicio", type: "select", value: filters.servicio, onChange: (value) => setFilters({ ...filters, servicio: value }), options: servicios.map((x) => ({ value: x.id, label: x.nombre }))},
+							{name: "estado", label: "Estado", type: "select", value: filters.estado, onChange: (value) => setFilters({ ...filters, estado: value }), options: [...new Map(items.map((x) => [x.estadoRecibo?.id, x.estadoRecibo])).values()].filter(Boolean).map((x) => ({ value: x.id, label: x.nombre }))},
+							{name: "torre", label: "Torre", type: "select", value: filters.torre, onChange: (value) => setFilters({ ...filters, torre: value }), options: [...new Map(apts.map((x) => [x.torre?.id, x.torre])).values()].filter(Boolean).map((x) => ({ value: x.id, label: x.nombreTorre }))},
+							{name: "desde", label: "Vence desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+							{name: "hasta", label: "Vence hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+							{name: "valorMin", label: "Valor mínimo", type: "number", min: "0", value: filters.valorMin, onChange: (value) => setFilters({ ...filters, valorMin: value })},
+						]}
+						onClear={() => { setSearch(""); setFilters({ servicio: "", estado: "", torre: "", desde: "", hasta: "", valorMin: "" }); }}
+					/>
 
 					<div className="table-wrap">
 						<table className="module-table">

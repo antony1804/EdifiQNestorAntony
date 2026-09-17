@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	reservasApi,
 	apartamentosApi,
@@ -30,6 +31,7 @@ export default function ReservasPage() {
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ zona: "", estado: "", desde: "", hasta: "", invitados: "" });
 
 	const load = () =>
 		reservasApi.list().then(setItems).catch((e) => setError(e.message));
@@ -112,11 +114,15 @@ export default function ReservasPage() {
 		}
 	};
 
-	const filtered = items.filter((x) =>
-		`${x.zona?.nombre} ${x.apartamento?.numeroApartamento} ${x.fechaReserva}`
-			.toLowerCase()
-			.includes(search.toLowerCase()),
-	);
+	const filtered = items.filter((x) => {
+		const texto = `${x.zona?.nombre} ${x.apartamento?.numeroApartamento} ${x.apartamento?.torre?.nombreTorre} ${x.fechaReserva}`.toLowerCase();
+		return texto.includes(search.toLowerCase())
+			&& (!filters.zona || String(x.zona?.id) === filters.zona)
+			&& (!filters.estado || String(x.estadoReserva?.id) === filters.estado)
+			&& (!filters.desde || x.fechaReserva >= filters.desde)
+			&& (!filters.hasta || x.fechaReserva <= filters.hasta)
+			&& (!filters.invitados || Number(x.cantidadInvitados) >= Number(filters.invitados));
+	});
 
 	return (
 		<div className="module-page">
@@ -141,15 +147,20 @@ export default function ReservasPage() {
 			</div>
 
 			<div className="card-panel">
-				<div className="toolbar">
-					<strong>{items.length} reservas</strong>
-					<input
-						className="search-input"
-						placeholder="Buscar..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
-				</div>
+				<div className="toolbar"><strong>{filtered.length} de {items.length} reservas</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Zona, apartamento, torre o fecha..."
+					filters={[
+						{name: "zona", label: "Zona", type: "select", value: filters.zona, onChange: (value) => setFilters({ ...filters, zona: value }), options: zonas.map((x) => ({ value: x.id, label: x.nombre }))},
+						{name: "estado", label: "Estado", type: "select", value: filters.estado, onChange: (value) => setFilters({ ...filters, estado: value }), options: estados.map((x) => ({ value: x.id, label: x.nombre }))},
+						{name: "desde", label: "Desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+						{name: "hasta", label: "Hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+						{name: "invitados", label: "Invitados min.", type: "number", min: "0", value: filters.invitados, onChange: (value) => setFilters({ ...filters, invitados: value })},
+					]}
+					onClear={() => { setSearch(""); setFilters({ zona: "", estado: "", desde: "", hasta: "", invitados: "" }); }}
+				/>
 
 				<div className="table-wrap">
 					<table className="module-table">

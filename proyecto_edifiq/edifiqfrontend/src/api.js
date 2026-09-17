@@ -1,11 +1,22 @@
-const ROOT_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const ROOT_URL = import.meta.env.VITE_API_URL || "";
 const BASE_URL = `${ROOT_URL}/api`;
 
 async function request(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { "Content-Type": "application/json", ...options.headers },
+      ...options,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "No se pudo conectar con el servidor. Verifica que el backend esté activo, que VITE_API_URL sea correcto y que CORS permita este frontend.",
+        { cause: error },
+      );
+    }
+    throw error;
+  }
 
   const text = await response.text();
   let data;
@@ -20,7 +31,9 @@ async function request(url, options = {}) {
     if (typeof data === "object") {
       message = data?.error || Object.values(data || {})[0] || message;
     }
-    throw new Error(message);
+    const requestError = new Error(message);
+    requestError.status = response.status;
+    throw requestError;
   }
   return data;
 }
@@ -79,6 +92,15 @@ export const registrarUsuarioResidente = (datos) =>
 
 export const loginUsuario = (credenciales) =>
   request(`${BASE_URL}/usuarios/login`, { method: "POST", body: JSON.stringify(credenciales) });
+
+export const generarPasswordTemporal = (id) =>
+  request(`${BASE_URL}/usuarios/${id}/password-temporal`, { method: "POST" });
+
+export const cambiarEstadoUsuario = (id, activo) =>
+  request(`${BASE_URL}/usuarios/${id}/estado`, {
+    method: "PUT",
+    body: JSON.stringify({ activo }),
+  });
 
 export const entregarPaquete = (id) =>
   request(`${BASE_URL}/paquetes/${id}/entregar`, { method: "PATCH" });

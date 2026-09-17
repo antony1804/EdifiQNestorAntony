@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPersonas, getRoles, registrarUsuario } from "../api";
+import { isValidPassword, isValidUsername, normalizeText } from "../utils/validation";
 
 const initialForm = { idPersona: "", idRol: "", username: "", password: "" };
 
@@ -18,11 +19,22 @@ function RegistroPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const idPersona = Number(form.idPersona);
+    const idRol = Number(form.idRol);
+    const username = normalizeText(form.username);
+    const password = normalizeText(form.password);
+
+    if (!idPersona || !idRol || !isValidUsername(username, 4) || !isValidPassword(password, 6)) {
+      setMensaje("Completa todos los campos con datos válidos.");
+      return;
+    }
+
     const payload = {
-      persona: { id: form.idPersona },
-      rol: { id: form.idRol },
-      username: form.username,
-      password: form.password,
+      persona: { id: idPersona },
+      rol: { id: idRol },
+      username,
+      password,
     };
     try {
       await registrarUsuario(payload);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import { apartamentosApi, torresApi, getPersonasDeApartamento } from "../../api";
 import "../../styles/modules.css";
 
@@ -19,6 +20,7 @@ export default function ApartamentosPage() {
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
 	const [torreFiltro, setTorreFiltro] = useState("");
+	const [filtros, setFiltros] = useState({ estado: "", pisoMin: "", pisoMax: "" });
 
 	const [detalle, setDetalle] = useState(null);
 	const [ocupantes, setOcupantes] = useState([]);
@@ -102,7 +104,10 @@ export default function ApartamentosPage() {
 			.toLowerCase()
 			.includes(search.toLowerCase());
 		const coincideTorre = !torreFiltro || String(x.torre?.id) === torreFiltro;
-		return coincideBusqueda && coincideTorre;
+		const coincideEstado = !filtros.estado || String(Boolean(x.activo)) === filtros.estado;
+		const coincidePisoMin = !filtros.pisoMin || Number(x.piso) >= Number(filtros.pisoMin);
+		const coincidePisoMax = !filtros.pisoMax || Number(x.piso) <= Number(filtros.pisoMax);
+		return coincideBusqueda && coincideTorre && coincideEstado && coincidePisoMin && coincidePisoMax;
 	});
 
 	return (
@@ -128,27 +133,19 @@ export default function ApartamentosPage() {
 			</div>
 
 			<div className="card-panel">
-				<div className="toolbar">
-					<strong>{filtered.length} apartamentos</strong>
-					<select
-						className="search-input"
-						value={torreFiltro}
-						onChange={(e) => setTorreFiltro(e.target.value)}
-					>
-						<option value="">Todas las torres</option>
-						{torres.map((t) => (
-							<option key={t.id} value={t.id}>
-								{t.nombreTorre}
-							</option>
-						))}
-					</select>
-					<input
-						className="search-input"
-						placeholder="Buscar apartamento o torre..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
-				</div>
+				<div className="toolbar"><strong>{filtered.length} apartamentos</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Buscar apartamento o torre..."
+					filters={[
+						{name: "torre", label: "Torre", type: "select", value: torreFiltro, onChange: setTorreFiltro, options: torres.map((x) => ({ value: x.id, label: x.nombreTorre }))},
+						{name: "estado", label: "Estado", type: "select", value: filtros.estado, onChange: (value) => setFiltros({ ...filtros, estado: value }), options: [{ value: "true", label: "Activos" }, { value: "false", label: "Inactivos" }]},
+						{name: "pisoMin", label: "Piso mínimo", type: "number", value: filtros.pisoMin, onChange: (value) => setFiltros({ ...filtros, pisoMin: value })},
+						{name: "pisoMax", label: "Piso máximo", type: "number", value: filtros.pisoMax, onChange: (value) => setFiltros({ ...filtros, pisoMax: value })},
+					]}
+					onClear={() => { setSearch(""); setTorreFiltro(""); setFiltros({ estado: "", pisoMin: "", pisoMax: "" }); }}
+				/>
 
 				<div className="table-wrap">
 					<table className="module-table">

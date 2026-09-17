@@ -2,7 +2,6 @@ package com.antony.edifiq.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,8 +15,11 @@ import com.antony.edifiq.repository.TipoDocumentoRepository;
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class TipoDocumentoController {
 
-    @Autowired
-    private TipoDocumentoRepository repo;
+    private final TipoDocumentoRepository repo;
+
+    public TipoDocumentoController(TipoDocumentoRepository repo) {
+        this.repo = repo;
+    }
 
     @GetMapping
     public List<TipoDocumento> listar() {

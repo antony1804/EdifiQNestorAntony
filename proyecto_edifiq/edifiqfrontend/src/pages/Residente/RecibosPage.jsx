@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
+import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
 import {
 	getApartamentoDePersona,
 	recibosApi,
@@ -23,6 +24,8 @@ export default function RecibosPage() {
 	const [seleccionado, setSeleccionado] = useState(null);
 	const [archivo, setArchivo] = useState(null);
 	const [subiendo, setSubiendo] = useState(false);
+	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState({ estado: "", desde: "", hasta: "" });
 
 	const user = JSON.parse(localStorage.getItem("authUser") || "null");
 	const idPersona = user?.persona?.id;
@@ -51,7 +54,8 @@ export default function RecibosPage() {
 	};
 
 	useEffect(() => {
-		cargar();
+		const timeoutId = setTimeout(cargar, 0);
+		return () => clearTimeout(timeoutId);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [idPersona]);
 
@@ -101,6 +105,11 @@ export default function RecibosPage() {
 	}
 
 	const a = apt.apartamento;
+	const filtered = items.filter((item) => `${item.tipoServicio?.nombre} ${item.periodo}`.toLowerCase().includes(search.toLowerCase())
+		&& (!filters.estado || item.estadoRecibo?.nombre === filters.estado)
+		&& (!filters.desde || item.fechaVencimiento >= filters.desde)
+		&& (!filters.hasta || item.fechaVencimiento <= filters.hasta));
+	const estados = [...new Set(items.map((item) => item.estadoRecibo?.nombre).filter(Boolean))];
 
 	return (
 		<div className="module-page">
@@ -118,6 +127,18 @@ export default function RecibosPage() {
 
 			<div className="card-panel">
 				{error && <div className="form-error">{error}</div>}
+				<div className="toolbar"><strong>{filtered.length} de {items.length} recibos</strong></div>
+				<MultiCriteriaBar
+					search={search}
+					onSearch={setSearch}
+					searchPlaceholder="Servicio o periodo..."
+					filters={[
+						{name: "estado", label: "Estado", type: "select", value: filters.estado, onChange: (value) => setFilters({ ...filters, estado: value }), options: estados.map((x) => ({ value: x, label: x }))},
+						{name: "desde", label: "Vence desde", type: "date", value: filters.desde, onChange: (value) => setFilters({ ...filters, desde: value })},
+						{name: "hasta", label: "Vence hasta", type: "date", value: filters.hasta, onChange: (value) => setFilters({ ...filters, hasta: value })},
+					]}
+					onClear={() => { setSearch(""); setFilters({ estado: "", desde: "", hasta: "" }); }}
+				/>
 				<table className="module-table">
 					<thead>
 						<tr>
@@ -130,8 +151,8 @@ export default function RecibosPage() {
 						</tr>
 					</thead>
 					<tbody>
-						{items.length ? (
-							items.map((x) => (
+						{filtered.length ? (
+							filtered.map((x) => (
 								<tr key={x.id}>
 									<td>{x.tipoServicio?.nombre}</td>
 									<td>{x.periodo}</td>
@@ -189,8 +210,9 @@ export default function RecibosPage() {
 							{Number(seleccionado?.valor).toLocaleString("es-CO")}
 						</p>
 						<div className="form-group full">
-							<label>Foto del comprobante</label>
+							<label htmlFor="recibo-comprobante">Foto del comprobante</label>
 							<input
+								id="recibo-comprobante"
 								required
 								type="file"
 								accept="image/*"
@@ -198,7 +220,7 @@ export default function RecibosPage() {
 							/>
 						</div>
 						<div className="form-footer">
-							<button className="primary-btn" disabled={subiendo}>
+							<button type="submit" className="primary-btn" disabled={subiendo}>
 								{subiendo ? "Subiendo..." : "Enviar comprobante"}
 							</button>
 						</div>
