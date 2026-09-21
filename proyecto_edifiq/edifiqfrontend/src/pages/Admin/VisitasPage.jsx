@@ -10,6 +10,7 @@ import {
 	finalizarVisita,
 } from "../../api";
 import { onlyLetters, onlyNumbers } from "../../utils/validation";
+import { generarReporteVisitas } from "../../utils/visitasPdf";
 import "../../styles/modules.css";
 
 const initial = {
@@ -134,6 +135,15 @@ export default function VisitasPage() {
 			&& (!filters.hasta || fecha <= filters.hasta);
 	});
 
+	const filtrosReporte = [
+		search && `Busqueda: ${search}`,
+		filters.tipo && `Tipo: ${tipos.find((x) => String(x.id) === filters.tipo)?.nombre || filters.tipo}`,
+		filters.estado && `Estado: ${estados.find((x) => String(x.id) === filters.estado)?.nombre || filters.estado}`,
+		filters.torre && `Torre: ${apts.find((x) => String(x.torre?.id) === filters.torre)?.torre?.nombreTorre || filters.torre}`,
+		filters.desde && `Desde: ${filters.desde}`,
+		filters.hasta && `Hasta: ${filters.hasta}`,
+	].filter(Boolean);
+
 	return (
 		<div className="module-page">
 			<div className="module-header">
@@ -160,7 +170,12 @@ export default function VisitasPage() {
 			</div>
 
 			<div className="card-panel">
-				<div className="toolbar"><strong>{filtered.length} de {items.length} visitas</strong></div>
+				<div className="toolbar">
+					<strong>{filtered.length} de {items.length} visitas</strong>
+					<button type="button" className="secondary-btn report-btn" onClick={() => generarReporteVisitas({ visitas: filtered, titulo: "Reporte de visitas", filtros: filtrosReporte })}>
+						PDF
+					</button>
+				</div>
 				<MultiCriteriaBar
 					search={search}
 					onSearch={setSearch}
@@ -377,11 +392,12 @@ export default function VisitasPage() {
 									id="admin-visita-estado"
 									required
 									value={form.estadoId}
+									disabled={!editId}
 									onChange={(e) =>
 										setForm({ ...form, estadoId: e.target.value })
 									}
 								>
-									{estados.map((x) => (
+									{estados.filter((x) => editId || x.nombre.toLowerCase() === "pendiente").map((x) => (
 										<option key={x.id} value={x.id}>
 											{x.nombre}
 										</option>

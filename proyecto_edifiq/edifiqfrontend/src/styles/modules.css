@@ -39,15 +39,17 @@ main .module-page {
 .multi-criteria-bar {
 	display: flex;
 	align-items: end;
-	gap: 10px;
+	gap: 12px;
 	flex-wrap: wrap;
-	padding: 14px;
-	border-bottom: 1px solid var(--line);
+	padding: 16px;
+	border: 1px solid #dfe6f0;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #f8faff 0%, #f3f7fc 100%);
 }
 
 .multi-criteria-bar > .search-input {
-	min-width: 220px;
-	flex: 1 1 240px;
+	min-width: min(280px, 100%);
+	flex: 1 1 300px;
 }
 
 .filter-control {
@@ -58,17 +60,53 @@ main .module-page {
 	color: var(--muted);
 	font-size: 12px;
 	font-weight: 700;
+	letter-spacing: 0.01em;
 }
 
 .filter-control select,
 .filter-control input {
 	min-height: 38px;
 	padding: 8px 10px;
-	border: 1px solid var(--line);
-	border-radius: 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 9px;
 	background: var(--surface);
 	color: var(--text);
 	font: inherit;
+	outline: none;
+	transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.filter-control select:hover,
+.filter-control input:hover,
+.search-input:hover {
+	border-color: #94a3b8;
+}
+
+.filter-control select:focus,
+.filter-control input:focus,
+.search-input:focus {
+	border-color: #2563eb;
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.13);
+}
+
+.clear-filters-btn {
+	align-self: end;
+	min-height: 38px;
+	border: 1px solid #cbd5e1 !important;
+	background: #fff;
+	color: #475467;
+}
+
+.clear-filters-btn span {
+	margin-right: 4px;
+	font-size: 17px;
+	line-height: 0;
+}
+
+.clear-filters-btn:hover {
+	background: #f8fafc;
+	border-color: #94a3b8 !important;
 }
 
 main .module-page .primary-btn,
@@ -107,6 +145,12 @@ main .module-page .primary-btn:hover {
 .secondary-btn {
 	background: #e8eefc;
 	color: #21458e;
+}
+
+.report-btn {
+	min-height: 38px;
+	padding: 8px 14px !important;
+	border: 1px solid #bfd0f5 !important;
 }
 
 .temporary-password {
@@ -359,14 +403,17 @@ main .module-page .toolbar {
 }
 
 .search-input {
-	max-width: 320px;
+	max-width: none;
 	width: 100%;
 	padding: 11px 13px;
-	border: 1px solid #d0d5dd;
-	border-radius: 10px;
+	min-height: 38px;
+	border: 1px solid #cbd5e1;
+	border-radius: 9px;
 	background: #fbfcfe;
 	font: inherit;
 	color: var(--ink);
+	outline: none;
+	transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
 .actions-cell {
@@ -402,6 +449,22 @@ main .module-page .toolbar {
 
 	.search-input {
 		max-width: none;
+	}
+
+	.multi-criteria-bar {
+		align-items: stretch;
+		padding: 12px;
+	}
+
+	.multi-criteria-bar > .search-input,
+	.filter-control,
+	.clear-filters-btn {
+		flex: 1 1 100%;
+		min-width: 0;
+	}
+
+	.clear-filters-btn {
+		align-self: stretch;
 	}
 
 	.form-grid {

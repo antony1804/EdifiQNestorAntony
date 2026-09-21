@@ -14,6 +14,7 @@ public class Visita {
  @Column(name="fecha_salida") private LocalDateTime fechaSalida;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_estado_visita",nullable=false) private EstadoVisita estadoVisita;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_apartamento",nullable=false) private Apartamento apartamento;
+ @Transient private String origenRegistro;
  @Column(name="fecha_creacion",updatable=false,insertable=false) private LocalDateTime fechaCreacion;
  @Column(name="fecha_actualizacion",insertable=false) private LocalDateTime fechaActualizacion;
  public Long getId(){return id;} public void setId(Long v){id=v;} public TipoVisita getTipoVisita(){return tipoVisita;} public void setTipoVisita(TipoVisita v){tipoVisita=v;}
@@ -21,5 +22,6 @@ public class Visita {
  public String getDocumentoVisitante(){return documentoVisitante;} public void setDocumentoVisitante(String v){documentoVisitante=v;} public String getMotivoVisita(){return motivoVisita;} public void setMotivoVisita(String v){motivoVisita=v;}
  public LocalDateTime getFechaIngreso(){return fechaIngreso;} public void setFechaIngreso(LocalDateTime v){fechaIngreso=v;} public LocalDateTime getFechaSalida(){return fechaSalida;} public void setFechaSalida(LocalDateTime v){fechaSalida=v;}
  public EstadoVisita getEstadoVisita(){return estadoVisita;} public void setEstadoVisita(EstadoVisita v){estadoVisita=v;} public Apartamento getApartamento(){return apartamento;} public void setApartamento(Apartamento v){apartamento=v;}
+ public String getOrigenRegistro(){return origenRegistro;} public void setOrigenRegistro(String v){origenRegistro=v;}
  public LocalDateTime getFechaCreacion(){return fechaCreacion;} public LocalDateTime getFechaActualizacion(){return fechaActualizacion;}
 }

@@ -16,8 +16,9 @@ const getFieldPattern = (field) => {
     return undefined;
 };
 
-export default function CatalogoPage({ title, subtitle, api, fields }) {
-    const initial = Object.fromEntries(fields.map((f) => [f.name, ""]));
+export default function CatalogoPage({ title, subtitle, api, fields, createFields = [] }) {
+    const allFields = [...fields, ...createFields];
+    const initial = Object.fromEntries(allFields.map((f) => [f.name, f.defaultValue ?? ""]));
     const [items, setItems] = useState([]);
     const [form, setForm] = useState(initial);
     const [editId, setEditId] = useState(null);
@@ -37,10 +38,14 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
         setError("");
 
         try {
+            const payload = Object.fromEntries(fields.map((field) => [field.name, form[field.name]]));
             if (editId) {
-                await api.update(editId, form);
+                await api.update(editId, payload);
             } else {
-                await api.create(form);
+                await api.create({
+                    ...payload,
+                    ...Object.fromEntries(createFields.map((field) => [field.name, Number(form[field.name])])),
+                });
             }
 
             setOpen(false);
@@ -153,7 +158,7 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
                     <form onSubmit={submit}>
                         {error && <div className="form-error">{error}</div>}
                         <div className="form-grid">
-                            {fields.map((f) => (
+                            {[...fields, ...(editId ? [] : createFields)].map((f) => (
                                 <div className="form-group" key={f.name}>
                                     <label>{f.label}</label>
                                     {f.type === "textarea" ? (
@@ -169,6 +174,7 @@ export default function CatalogoPage({ title, subtitle, api, fields }) {
                                             required
                                             type="text"
                                             maxLength={f.maxLength}
+                                            min={f.min}
                                             inputMode={f.type === "number" ? "numeric" : undefined}
                                             pattern={getFieldPattern(f)}
                                             value={form[f.name]}

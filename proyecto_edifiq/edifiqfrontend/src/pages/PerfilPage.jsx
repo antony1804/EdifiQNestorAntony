@@ -119,15 +119,10 @@ export default function PerfilPage() {
 		setErrorCuenta("");
 		setOkCuenta("");
 
-		const username = normalizeText(cuenta.username);
 		const passwordActual = normalizeText(cuenta.passwordActual);
 		const passwordNueva = normalizeText(cuenta.passwordNueva);
 		const confirmarPassword = normalizeText(cuenta.confirmarPassword);
 
-		if (!username || username.length < 4) {
-			setErrorCuenta("El usuario debe tener al menos 4 caracteres.");
-			return;
-		}
 		if (!passwordActual) {
 			setErrorCuenta("Debes ingresar tu contraseña actual.");
 			return;
@@ -147,7 +142,6 @@ export default function PerfilPage() {
 
 		try {
 			const actualizado = await actualizarPerfilUsuario(user.id, {
-				username,
 				passwordActual,
 				passwordNueva: passwordNueva || null,
 			});
@@ -160,7 +154,7 @@ export default function PerfilPage() {
 				passwordNueva: "",
 				confirmarPassword: "",
 			});
-			setOkCuenta("Tu usuario y/o contraseña se actualizaron correctamente.");
+			setOkCuenta("Tu contraseña se actualizó correctamente.");
 		} catch (err) {
 			setErrorCuenta(err.message);
 		}
@@ -280,11 +274,8 @@ export default function PerfilPage() {
 							<label htmlFor="perfil-usuario">Usuario</label>
 							<input
 								id="perfil-usuario"
-								required
-								minLength="4"
-								maxLength="50"
+								readOnly
 								value={cuenta.username}
-								onChange={(e) => setCuenta({ ...cuenta, username: e.target.value })}
 							/>
 						</div>
 
@@ -325,7 +316,7 @@ export default function PerfilPage() {
 					</div>
 
 					<p className="module-subtitle">
-						Deja los campos de nueva contraseña vacíos si solo quieres cambiar el usuario.
+						El nombre de usuario no se puede modificar.
 						Siempre debes confirmar tu contraseña actual.
 					</p>
 

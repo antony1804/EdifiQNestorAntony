@@ -55,6 +55,8 @@ export const paquetesApi = crud("paquetes");
 export const recibosApi = crud("recibos");
 export const reservasApi = crud("reservas");
 export const visitasApi = crud("visitas");
+export const autorizarVisita = (id) =>
+  request(`${BASE_URL}/visitas/${id}/autorizar`, { method: "PATCH" });
 export const torresApi = crud("torres");
 export const zonasApi = crud("zonas");
 export const asignacionesApi = crud("apartamentos-personas");

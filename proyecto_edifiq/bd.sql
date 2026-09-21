@@ -92,7 +92,8 @@ VALUES
 ('Pendiente'),
 ('Ingresó'),
 ('Finalizada'),
-('Cancelada');
+('Cancelada'),
+('Autorizada');
 
 -- -----------------------------------------------------
 

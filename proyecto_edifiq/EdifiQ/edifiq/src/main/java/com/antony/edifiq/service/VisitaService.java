@@ -18,6 +18,8 @@ import com.antony.edifiq.repository.VisitaRepository;
 
 @Service
 public class VisitaService {
+	private static final String ESTADO_PENDIENTE = "Pendiente";
+	private static final String ESTADO_AUTORIZADA = "Autorizada";
 	private final VisitaRepository repo;
 	private final ApartamentoRepository aptRepo;
 	private final TipoVisitaRepository tipoRepo;
@@ -51,7 +53,7 @@ public class VisitaService {
 		v.setApartamento(apt(v));
 		v.setTipoVisita(tipo(v));
 		v.setTipoDocumento(doc(v));
-		v.setEstadoVisita(estado(v));
+		v.setEstadoVisita(estadoInicial(v));
 		return repo.save(v);
 	}
 
@@ -70,6 +72,30 @@ public class VisitaService {
 		v.setEstadoVisita(estado(d));
 		v.setApartamento(apt(d));
 		return repo.save(v);
+	}
+
+	@Transactional
+	public Visita autorizar(Long id) {
+		Visita visita = repo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Visita no encontrada"));
+		if (!ESTADO_PENDIENTE.equalsIgnoreCase(visita.getEstadoVisita().getNombre())) {
+			throw new IllegalArgumentException("Solo se pueden autorizar visitas pendientes");
+		}
+		visita.setEstadoVisita(estadoPorNombre(ESTADO_AUTORIZADA));
+		return repo.save(visita);
+	}
+
+	@Transactional
+	public Visita finalizar(Long id) {
+		Visita visita = repo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Visita no encontrada"));
+		if (visita.getFechaSalida() != null
+				|| "Finalizada".equalsIgnoreCase(visita.getEstadoVisita().getNombre())) {
+			throw new IllegalArgumentException("La visita ya fue finalizada");
+		}
+		visita.setFechaSalida(java.time.LocalDateTime.now());
+		visita.setEstadoVisita(estadoPorNombre("Finalizada"));
+		return repo.save(visita);
 	}
 
 	private void validar(Visita v) {
@@ -116,6 +142,24 @@ public class VisitaService {
 		return estadoRepo.findById(v.getEstadoVisita().getId())
 				.orElseThrow(() -> new IllegalArgumentException(
 						"Estado de visita no encontrado"));
+	}
+
+	private EstadoVisita estadoInicial(Visita v) {
+		String nombre = "RESIDENTE".equalsIgnoreCase(v.getOrigenRegistro())
+				? ESTADO_AUTORIZADA
+				: ESTADO_PENDIENTE;
+		return estadoPorNombre(nombre);
+	}
+
+	private EstadoVisita estadoPorNombre(String nombre) {
+		return estadoRepo.findAll().stream()
+				.filter(estado -> nombre.equalsIgnoreCase(estado.getNombre()))
+				.findFirst()
+				.orElseGet(() -> {
+					EstadoVisita nuevoEstado = new EstadoVisita();
+					nuevoEstado.setNombre(nombre);
+					return estadoRepo.save(nuevoEstado);
+				});
 	}
 
 	public void eliminar(Long id) {

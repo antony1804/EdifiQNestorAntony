@@ -91,6 +91,10 @@
 }
 
 .personas-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
 	margin-top: 2px;
 	margin-bottom: 14px;
 	padding: 0 2px 14px;
@@ -100,6 +104,15 @@
 .personas-toolbar strong {
 	color: #16243f;
 	font-size: 15px;
+}
+
+.personas-filter-status {
+	padding: 5px 9px;
+	border-radius: 999px;
+	background: #eff8ff;
+	color: #175cd3;
+	font-size: 12px;
+	font-weight: 700;
 }
 
 .personas-title {
@@ -375,6 +388,11 @@
 }
 
 @media (max-width: 560px) {
+	.personas-toolbar {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
 	.personas-title {
 		margin-bottom: 18px;
 	}

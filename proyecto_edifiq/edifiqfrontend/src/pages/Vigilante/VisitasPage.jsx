@@ -9,6 +9,7 @@ import {
 	finalizarVisita,
 } from "../../api";
 import { onlyLetters, onlyNumbers } from "../../utils/validation";
+import { generarReporteVisitas } from "../../utils/visitasPdf";
 import "../../styles/modules.css";
 
 const initial = {
@@ -97,6 +98,15 @@ export default function VigilanteVisitasPage() {
 		.filter((x) => !filters.hasta || x.fechaIngreso?.slice(0, 10) <= filters.hasta)
 		.sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso));
 
+	const filtrosReporte = [
+		soloActivas && "Solo visitas activas",
+		search && `Busqueda: ${search}`,
+		filters.tipo && `Tipo: ${tipos.find((x) => String(x.id) === filters.tipo)?.nombre || filters.tipo}`,
+		filters.torre && `Torre: ${apts.find((x) => String(x.torre?.id) === filters.torre)?.torre?.nombreTorre || filters.torre}`,
+		filters.desde && `Desde: ${filters.desde}`,
+		filters.hasta && `Hasta: ${filters.hasta}`,
+	].filter(Boolean);
+
 	return (
 		<div className="module-page">
 			<div className="module-header">
@@ -121,6 +131,9 @@ export default function VigilanteVisitasPage() {
 			<div className="card-panel">
 				<div className="toolbar">
 					<strong>{filtered.length} visitas</strong>
+					<button type="button" className="secondary-btn report-btn" onClick={() => generarReporteVisitas({ visitas: filtered, titulo: "Reporte de visitas", filtros: filtrosReporte })}>
+						PDF
+					</button>
 					<label htmlFor="vigilante-solo-activas" style={{ display: "flex", alignItems: "center", gap: 6 }}>
 						<input
 							id="vigilante-solo-activas"

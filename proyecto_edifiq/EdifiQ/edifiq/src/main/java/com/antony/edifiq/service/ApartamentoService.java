@@ -1,6 +1,7 @@
 package com.antony.edifiq.service;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,31 @@ public class ApartamentoService {
   }
 
   public List<Apartamento> listar() {
+    asegurarApartamentosDeTorresExistentes();
     return repo.findAll();
+  }
+
+  @Transactional
+  private void asegurarApartamentosDeTorresExistentes() {
+    var apartamentosNuevos = new ArrayList<Apartamento>();
+    for (var torre : torreRepo.findAll()) {
+      if (!repo.findByTorre_Id(torre.getId()).isEmpty()) {
+        continue;
+      }
+      for (int piso = 1; piso <= 4; piso++) {
+        for (int numero = 1; numero <= 5; numero++) {
+          Apartamento apartamento = new Apartamento();
+          apartamento.setNumeroApartamento(String.valueOf(piso * 100 + numero));
+          apartamento.setPiso(piso);
+          apartamento.setActivo(true);
+          apartamento.setTorre(torre);
+          apartamentosNuevos.add(apartamento);
+        }
+      }
+    }
+    if (!apartamentosNuevos.isEmpty()) {
+      repo.saveAll(apartamentosNuevos);
+    }
   }
 
   public Apartamento obtener(Long id) {

@@ -184,8 +184,7 @@ public class UsuarioController {
         return ResponseEntity.ok(Map.of("estado", estado.getNombre()));
     }
 
-    // Autoservicio: el propio usuario cambia su username y/o contraseña.
-    // El rol NUNCA se toca aquí (ni siquiera se recibe en el DTO).
+    // Autoservicio: el propio usuario solo puede cambiar su contraseña.
     @PutMapping("/{id}/perfil")
     public ResponseEntity<?> actualizarPerfil(
             @PathVariable Long id,
@@ -197,23 +196,6 @@ public class UsuarioController {
         if (dto.getPasswordActual() == null
                 || !dto.getPasswordActual().equals(u.getPassword())) {
             throw new IllegalArgumentException("La contraseña actual no es correcta");
-        }
-
-        if (dto.getUsername() != null && !dto.getUsername().isBlank()
-                && !dto.getUsername().equals(u.getUsername())) {
-
-            if (dto.getUsername().length() < 4 || dto.getUsername().length() > 50) {
-                throw new IllegalArgumentException(
-                        "El usuario debe tener entre 4 y 50 caracteres");
-            }
-
-            repo.findByUsername(dto.getUsername())
-                    .filter(existente -> !existente.getId().equals(id))
-                    .ifPresent(existente -> {
-                        throw new IllegalArgumentException("El nombre de usuario ya existe");
-                    });
-
-            u.setUsername(dto.getUsername());
         }
 
         if (dto.getPasswordNueva() != null && !dto.getPasswordNueva().isBlank()) {

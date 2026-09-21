@@ -171,6 +171,8 @@ function PersonaPages() {
       && (!filtros.estado || String(Boolean(p.activo)) === filtros.estado);
   });
 
+  const hayFiltrosActivos = Boolean(busqueda || filtros.tipoDocumento || filtros.estado);
+
   const tipoDocumentoSeleccionado = tiposDocumento.find(
     (t) => t.id === Number(form.idTipoDocumento)
   );
@@ -188,7 +190,14 @@ function PersonaPages() {
         </button>
       </div>
 
-      <div className="toolbar personas-toolbar"><strong>{personasFiltradas.length} personas</strong></div>
+      <div className="toolbar personas-toolbar">
+        <strong>
+          {hayFiltrosActivos
+            ? `${personasFiltradas.length} de ${personas.length} personas`
+            : `${personas.length} personas`}
+        </strong>
+        {hayFiltrosActivos && <span className="personas-filter-status">Resultado filtrado</span>}
+      </div>
       <MultiCriteriaBar
         search={busqueda}
         onSearch={setBusqueda}

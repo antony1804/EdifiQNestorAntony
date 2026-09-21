@@ -11,6 +11,7 @@ export default function MultiCriteriaBar({
     <div className="multi-criteria-bar">
       <input
         className="search-input"
+        aria-label={searchPlaceholder}
         placeholder={searchPlaceholder}
         value={search}
         onChange={(event) => onSearch(event.target.value)}
@@ -37,7 +38,8 @@ export default function MultiCriteriaBar({
         </label>
       ))}
       {hasFilters && (
-        <button type="button" className="small-btn" onClick={onClear}>
+        <button type="button" className="small-btn clear-filters-btn" onClick={onClear}>
+          <span aria-hidden="true">×</span>
           Limpiar filtros
         </button>
       )}
