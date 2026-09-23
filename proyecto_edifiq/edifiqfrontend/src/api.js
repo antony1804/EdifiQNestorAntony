@@ -104,8 +104,11 @@ export const cambiarEstadoUsuario = (id, activo) =>
     body: JSON.stringify({ activo }),
   });
 
-export const entregarPaquete = (id) =>
-  request(`${BASE_URL}/paquetes/${id}/entregar`, { method: "PATCH" });
+export const entregarPaquete = (id, datos) =>
+  request(`${BASE_URL}/paquetes/${id}/entregar`, {
+    method: "PATCH",
+    body: JSON.stringify(datos),
+  });
 
 // Recibos pendientes de que el admin revise el comprobante subido por el residente
 export const recibosPendientesRevision = () =>

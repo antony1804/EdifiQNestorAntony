@@ -339,6 +339,8 @@ CREATE TABLE paquete(
 
     fecha_recepcion DATETIME NOT NULL,
     fecha_entrega DATETIME,
+    id_persona_entrega INT NULL,
+    observacion_entrega VARCHAR(250),
 
     id_estado_paquete INT NOT NULL DEFAULT 1,
 
@@ -354,7 +356,10 @@ CREATE TABLE paquete(
     REFERENCES estado_paquete(id_estado_paquete),
 
     FOREIGN KEY(id_apartamento)
-    REFERENCES apartamento(id_apartamento)
+    REFERENCES apartamento(id_apartamento),
+
+    FOREIGN KEY(id_persona_entrega)
+    REFERENCES persona(id_persona)
 );
 
 -- RECIBOS

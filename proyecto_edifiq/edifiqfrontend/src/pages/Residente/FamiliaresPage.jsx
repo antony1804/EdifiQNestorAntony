@@ -14,6 +14,8 @@ import {
 	isValidName,
 	isValidPhone,
 	normalizeText,
+	onlyLetters,
+	onlyNumbers,
 } from "../../utils/validation";
 import "../../styles/modules.css";
 
@@ -227,9 +229,10 @@ export default function FamiliaresPage() {
 									id="familiar-numero-documento"
 									required
 									maxLength="20"
+									inputMode="numeric"
 									value={form.numeroDocumento}
 									onChange={(e) =>
-										setForm({ ...form, numeroDocumento: e.target.value })
+										setForm({ ...form, numeroDocumento: onlyNumbers(e.target.value) })
 									}
 								/>
 							</div>
@@ -241,7 +244,7 @@ export default function FamiliaresPage() {
 									maxLength="100"
 									value={form.nombres}
 									onChange={(e) =>
-										setForm({ ...form, nombres: e.target.value })
+										setForm({ ...form, nombres: onlyLetters(e.target.value) })
 									}
 								/>
 							</div>
@@ -253,7 +256,7 @@ export default function FamiliaresPage() {
 									maxLength="100"
 									value={form.apellidos}
 									onChange={(e) =>
-										setForm({ ...form, apellidos: e.target.value })
+										setForm({ ...form, apellidos: onlyLetters(e.target.value) })
 									}
 								/>
 							</div>
@@ -262,9 +265,10 @@ export default function FamiliaresPage() {
 								<input
 									id="familiar-telefono"
 									maxLength="20"
+									inputMode="numeric"
 									value={form.telefono}
 									onChange={(e) =>
-										setForm({ ...form, telefono: e.target.value })
+										setForm({ ...form, telefono: onlyNumbers(e.target.value) })
 									}
 								/>
 							</div>

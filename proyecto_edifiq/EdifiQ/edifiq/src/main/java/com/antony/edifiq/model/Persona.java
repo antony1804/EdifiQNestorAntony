@@ -18,20 +18,24 @@ public class Persona {
     private TipoDocumento tipoDocumento;
 
     @NotBlank(message = "El número de documento es obligatorio")
-    @Size(max = 20, message = "El documento no puede superar 20 caracteres")
+    @Pattern(regexp = "\\d+", message = "El documento solo puede contener números")
+    @Size(min = 6, max = 20, message = "El documento debe tener entre 6 y 20 dígitos")
     @Column(name = "numero_documento", nullable = false, length = 20)
     private String numeroDocumento;
 
     @NotBlank(message = "Los nombres son obligatorios")
+    @Pattern(regexp = "[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\\s'-]+", message = "Los nombres solo pueden contener letras")
     @Size(max = 100, message = "Los nombres no pueden superar 100 caracteres")
     @Column(nullable = false, length = 100)
     private String nombres;
 
     @NotBlank(message = "Los apellidos son obligatorios")
+    @Pattern(regexp = "[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\\s'-]+", message = "Los apellidos solo pueden contener letras")
     @Size(max = 100, message = "Los apellidos no pueden superar 100 caracteres")
     @Column(nullable = false, length = 100)
     private String apellidos;
 
+    @Pattern(regexp = "^$|\\d{7,20}", message = "El teléfono debe tener entre 7 y 20 dígitos")
     @Size(max = 20, message = "El teléfono no puede superar 20 caracteres")
     @Column(length = 20)
     private String telefono;

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.antony.edifiq.model.Paquete;
-import com.antony.edifiq.repository.EstadoPaqueteRepository;
 import com.antony.edifiq.service.PaqueteService;
 
 @RestController
@@ -24,11 +23,9 @@ import com.antony.edifiq.service.PaqueteService;
 @CrossOrigin(origins = "*")
 public class PaqueteController {
 	private final PaqueteService service;
-	private final EstadoPaqueteRepository estadoRepo;
 
-	public PaqueteController(PaqueteService s, EstadoPaqueteRepository e) {
+	public PaqueteController(PaqueteService s) {
 		service = s;
-		estadoRepo = e;
 	}
 
 	@GetMapping
@@ -61,18 +58,8 @@ public class PaqueteController {
 	}
 
 	@PatchMapping("/{id}/entregar")
-	public ResponseEntity<?> entregar(@PathVariable Long id) {
-		var p = service.listar().stream()
-				.filter(x -> x.getId().equals(id))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado"));
-		var estado = estadoRepo.findAll().stream()
-				.filter(e -> e.getNombre().equalsIgnoreCase("Entregado"))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException(
-						"Estado Entregado no configurado"));
-		p.setEstadoPaquete(estado);
-		p.setFechaEntrega(java.time.LocalDateTime.now());
-		return ResponseEntity.ok(service.actualizar(id, p));
+	public ResponseEntity<?> entregar(@PathVariable Long id,
+			@RequestBody @jakarta.validation.Valid com.antony.edifiq.model.EntregaPaqueteDTO datos) {
+		return ResponseEntity.ok(service.entregar(id, datos.getPersonaId(), datos.getFechaEntrega(), datos.getObservacion()));
 	}
 }

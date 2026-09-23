@@ -7,5 +7,6 @@ public interface ApartamentoPersonaRepository extends JpaRepository<ApartamentoP
  List<ApartamentoPersona> findByApartamento_Id(Long idApartamento);
  List<ApartamentoPersona> findByPersona_Id(Long idPersona);
  Optional<ApartamentoPersona> findByApartamento_IdAndPersona_Id(Long idApartamento,Long idPersona);
+ boolean existsByApartamento_IdAndPersona_Id(Long idApartamento,Long idPersona);
  boolean existsByPersona_Id(Long idPersona);
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { actualizarPersona, eliminarFamiliar } from "../api";
 import Modal from "./Modal";
 import MultiCriteriaBar from "./MultiCriteriaBar";
+import { isValidDocumentNumber, isValidEmail, isValidName, isValidPhone, normalizeText, onlyLetters, onlyNumbers } from "../utils/validation";
 
 export default function FamiliaresTable({
 	idApartamento,
@@ -31,15 +32,36 @@ export default function FamiliaresTable({
 	const guardarEdicion = async (e) => {
 		e.preventDefault();
 		setError("");
+		const numeroDocumento = normalizeText(form.numeroDocumento);
+		const nombres = normalizeText(form.nombres);
+		const apellidos = normalizeText(form.apellidos);
+		const telefono = normalizeText(form.telefono);
+		const correo = normalizeText(form.correo);
+		if (!form.tipoDocumentoId || !isValidDocumentNumber(numeroDocumento)) {
+			setError("El documento debe contener entre 6 y 20 dígitos.");
+			return;
+		}
+		if (!isValidName(nombres) || !isValidName(apellidos)) {
+			setError("Nombres y apellidos solo pueden contener letras.");
+			return;
+		}
+		if (!isValidPhone(telefono)) {
+			setError("El teléfono debe contener solo números y tener entre 7 y 20 dígitos.");
+			return;
+		}
+		if (correo && !isValidEmail(correo)) {
+			setError("El correo electrónico no tiene un formato válido.");
+			return;
+		}
 		setSaving(true);
 		try {
 			await actualizarPersona(editando.persona.id, {
 				tipoDocumento: { id: Number(form.tipoDocumentoId) },
-				numeroDocumento: form.numeroDocumento.trim(),
-				nombres: form.nombres.trim(),
-				apellidos: form.apellidos.trim(),
-				telefono: form.telefono.trim() || null,
-				correo: form.correo.trim() || null,
+				numeroDocumento,
+				nombres,
+				apellidos,
+				telefono: telefono || null,
+				correo: correo || null,
 				activo: true,
 			});
 			setEditando(null);
@@ -141,9 +163,10 @@ export default function FamiliaresTable({
 								<input
 									required
 									maxLength="20"
+									inputMode="numeric"
 									value={form.numeroDocumento}
 									onChange={(e) =>
-										setForm({ ...form, numeroDocumento: e.target.value })
+										setForm({ ...form, numeroDocumento: onlyNumbers(e.target.value) })
 									}
 								/>
 							</div>
@@ -153,7 +176,7 @@ export default function FamiliaresTable({
 									required
 									maxLength="100"
 									value={form.nombres}
-									onChange={(e) => setForm({ ...form, nombres: e.target.value })}
+									onChange={(e) => setForm({ ...form, nombres: onlyLetters(e.target.value) })}
 								/>
 							</div>
 							<div className="form-group">
@@ -163,7 +186,7 @@ export default function FamiliaresTable({
 									maxLength="100"
 									value={form.apellidos}
 									onChange={(e) =>
-										setForm({ ...form, apellidos: e.target.value })
+										setForm({ ...form, apellidos: onlyLetters(e.target.value) })
 									}
 								/>
 							</div>
@@ -171,9 +194,10 @@ export default function FamiliaresTable({
 								<label>Teléfono</label>
 								<input
 									maxLength="20"
+									inputMode="numeric"
 									value={form.telefono}
 									onChange={(e) =>
-										setForm({ ...form, telefono: e.target.value })
+										setForm({ ...form, telefono: onlyNumbers(e.target.value) })
 									}
 								/>
 							</div>

@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.antony.edifiq.model.Apartamento;
 import com.antony.edifiq.model.EstadoPaquete;
 import com.antony.edifiq.model.Paquete;
+import com.antony.edifiq.model.Persona;
+import com.antony.edifiq.repository.ApartamentoPersonaRepository;
+import com.antony.edifiq.repository.PersonaRepository;
 import com.antony.edifiq.repository.ApartamentoRepository;
 import com.antony.edifiq.repository.EstadoPaqueteRepository;
 import com.antony.edifiq.repository.PaqueteRepository;
@@ -17,14 +20,20 @@ public class PaqueteService {
 	private final PaqueteRepository repo;
 	private final ApartamentoRepository aptRepo;
 	private final EstadoPaqueteRepository estadoRepo;
+	private final ApartamentoPersonaRepository apartamentoPersonaRepo;
+	private final PersonaRepository personaRepo;
 
 	public PaqueteService(
 			PaqueteRepository r,
 			ApartamentoRepository a,
-			EstadoPaqueteRepository e) {
+			EstadoPaqueteRepository e,
+			ApartamentoPersonaRepository apr,
+			PersonaRepository pr) {
 		repo = r;
 		aptRepo = a;
 		estadoRepo = e;
+		apartamentoPersonaRepo = apr;
+		personaRepo = pr;
 	}
 
 	public List<Paquete> listar() {
@@ -57,9 +66,38 @@ public class PaqueteService {
 		p.setRemitente(d.getRemitente());
 		p.setFechaRecepcion(d.getFechaRecepcion());
 		p.setFechaEntrega(d.getFechaEntrega());
+		if (d.getPersonaEntrega() != null) {
+			p.setPersonaEntrega(d.getPersonaEntrega());
+		}
+		if (d.getObservacionEntrega() != null) {
+			p.setObservacionEntrega(d.getObservacionEntrega());
+		}
 		p.setApartamento(apt(d));
 		p.setEstadoPaquete(estado(d));
 		return repo.save(p);
+	}
+
+	@Transactional
+	public Paquete entregar(Long id, Long personaId, LocalDateTime fechaEntrega, String observacion) {
+		Paquete paquete = repo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado"));
+		if (!apartamentoPersonaRepo.existsByApartamento_IdAndPersona_Id(
+				paquete.getApartamento().getId(), personaId)) {
+			throw new IllegalArgumentException("La persona seleccionada no pertenece al apartamento del paquete");
+		}
+		Persona persona = personaRepo.findById(personaId)
+				.orElseThrow(() -> new IllegalArgumentException("Persona no encontrada"));
+		if (fechaEntrega.isBefore(paquete.getFechaRecepcion())) {
+			throw new IllegalArgumentException("La entrega no puede ser anterior a la recepción");
+		}
+		EstadoPaquete entregado = estadoRepo.findAll().stream()
+				.filter(e -> e.getNombre().equalsIgnoreCase("Entregado"))
+				.findFirst().orElseThrow(() -> new IllegalArgumentException("Estado Entregado no configurado"));
+		paquete.setEstadoPaquete(entregado);
+		paquete.setFechaEntrega(fechaEntrega);
+		paquete.setPersonaEntrega(persona);
+		paquete.setObservacionEntrega(observacion == null || observacion.isBlank() ? null : observacion.trim());
+		return repo.save(paquete);
 	}
 
 	private void validar(Paquete p) {

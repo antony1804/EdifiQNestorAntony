@@ -391,17 +391,19 @@ export default function VisitasPage() {
 								<select
 									id="admin-visita-estado"
 									required
-									value={form.estadoId}
-									disabled={!editId}
+									value={form.estadoId || "1"}
+									disabled
 									onChange={(e) =>
 										setForm({ ...form, estadoId: e.target.value })
 									}
 								>
-									{estados.filter((x) => editId || x.nombre.toLowerCase() === "pendiente").map((x) => (
-										<option key={x.id} value={x.id}>
-											{x.nombre}
-										</option>
-									))}
+									{estados
+										.filter((x) => x.nombre.toLowerCase() === "pendiente" || String(x.id) === String(form.estadoId))
+										.map((x) => (
+											<option key={x.id} value={x.id}>
+												{x.nombre}
+											</option>
+										))}
 								</select>
 							</div>
 						</div>

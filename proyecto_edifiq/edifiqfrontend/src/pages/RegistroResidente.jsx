@@ -216,6 +216,7 @@ export default function RegistroResidente() {
                 </option>
               ))}
             </select>
+            <br />
             
                 <label htmlFor="registro-numero-documento">Número de documento</label>
             <input
@@ -227,7 +228,7 @@ export default function RegistroResidente() {
               onChange={handlePersonaChange}
               required
             />
-
+            <br />
             <label htmlFor="registro-nombres">Nombres</label>
             <input
               id="registro-nombres"
@@ -237,7 +238,7 @@ export default function RegistroResidente() {
               onChange={handlePersonaChange}
               required
             />
-
+            <br />
             <label htmlFor="registro-apellidos">Apellidos</label>
             <input
               id="registro-apellidos"
@@ -247,7 +248,7 @@ export default function RegistroResidente() {
               onChange={handlePersonaChange}
               required
             />
-
+            <br />
             <label htmlFor="registro-telefono">Teléfono</label>
             <input
               id="registro-telefono"
@@ -257,7 +258,7 @@ export default function RegistroResidente() {
               value={persona.telefono}
               onChange={handlePersonaChange}
             />
-
+            <br />
             <label htmlFor="registro-correo">Correo electrónico</label>
             <input
               id="registro-correo"

@@ -7,8 +7,8 @@ public class Visita {
  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Column(name="id_visita") private Long id;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_tipo_visita",nullable=false) private TipoVisita tipoVisita;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_tipo_documento",nullable=false) private TipoDocumento tipoDocumento;
- @NotBlank(message="El nombre del visitante es obligatorio") @Size(max=100) @Column(name="nombre_visitante",nullable=false) private String nombreVisitante;
- @NotBlank(message="El documento del visitante es obligatorio") @Size(max=30) @Column(name="documento_visitante",nullable=false) private String documentoVisitante;
+ @NotBlank(message="El nombre del visitante es obligatorio") @Pattern(regexp="[A-Za-zÁÉÍÓÚÜáéíóúüÑñ\\s'-]+",message="El nombre solo puede contener letras") @Size(max=100) @Column(name="nombre_visitante",nullable=false) private String nombreVisitante;
+ @NotBlank(message="El documento del visitante es obligatorio") @Pattern(regexp="\\d+",message="El documento solo puede contener números") @Size(min=6,max=30) @Column(name="documento_visitante",nullable=false) private String documentoVisitante;
  @Size(max=150) @Column(name="motivo_visita") private String motivoVisita;
  @NotNull(message="La fecha de ingreso es obligatoria") @Column(name="fecha_ingreso",nullable=false) private LocalDateTime fechaIngreso;
  @Column(name="fecha_salida") private LocalDateTime fechaSalida;

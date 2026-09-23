@@ -6,6 +6,7 @@ import {
 	apartamentosApi,
 	getTiposVisita,
 	getTiposDocumento,
+	getEstadosVisita,
 	finalizarVisita,
 } from "../../api";
 import { onlyLetters, onlyNumbers } from "../../utils/validation";
@@ -18,7 +19,15 @@ const initial = {
 	nombreVisitante: "",
 	documentoVisitante: "",
 	motivoVisita: "",
+	fechaIngreso: "",
+	fechaSalida: "",
+	estadoId: "1",
 	apartamentoId: "",
+};
+
+const toLocalDateTimeValue = (date = new Date()) => {
+	const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+	return local.toISOString().slice(0, 16);
 };
 
 const fmt = (d) => (d ? new Date(d).toLocaleString("es-CO") : "—");
@@ -33,6 +42,7 @@ export default function VigilanteVisitasPage() {
 	const [apts, setApts] = useState([]);
 	const [tipos, setTipos] = useState([]);
 	const [docs, setDocs] = useState([]);
+	const [estados, setEstados] = useState([]);
 	const [form, setForm] = useState(initial);
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
@@ -48,6 +58,7 @@ export default function VigilanteVisitasPage() {
 		apartamentosApi.list().then(setApts);
 		getTiposVisita().then(setTipos);
 		getTiposDocumento().then(setDocs);
+		getEstadosVisita().then(setEstados);
 	}, []);
 
 	const submit = async (e) => {
@@ -61,8 +72,9 @@ export default function VigilanteVisitasPage() {
 				nombreVisitante: form.nombreVisitante.trim(),
 				documentoVisitante: form.documentoVisitante.trim(),
 				motivoVisita: form.motivoVisita.trim(),
-				fechaIngreso: new Date().toISOString().slice(0, 19),
-				estadoVisita: { id: 1 },
+				fechaIngreso: form.fechaIngreso || toLocalDateTimeValue(),
+				fechaSalida: form.fechaSalida || null,
+				estadoVisita: { id: Number(form.estadoId || 1) },
 				apartamento: { id: Number(form.apartamentoId) },
 			};
 
@@ -119,7 +131,10 @@ export default function VigilanteVisitasPage() {
 				<button
 					className="primary-btn"
 					onClick={() => {
-						setForm(initial);
+						setForm({
+							...initial,
+							fechaIngreso: toLocalDateTimeValue(),
+						});
 						setError("");
 						setOpen(true);
 					}}
@@ -315,6 +330,53 @@ export default function VigilanteVisitasPage() {
 										setForm({ ...form, motivoVisita: e.target.value })
 									}
 								/>
+							</div>
+
+							<div className="form-group">
+								<label htmlFor="vigilante-visita-ingreso">Ingreso</label>
+								<input
+									id="vigilante-visita-ingreso"
+									required
+									type="datetime-local"
+									value={form.fechaIngreso}
+									onChange={(e) =>
+										setForm({ ...form, fechaIngreso: e.target.value })
+									}
+								/>
+							</div>
+
+							<div className="form-group">
+								<label htmlFor="vigilante-visita-salida">Salida</label>
+								<input
+									id="vigilante-visita-salida"
+									type="datetime-local"
+									min={form.fechaIngreso}
+									value={form.fechaSalida}
+									onChange={(e) =>
+										setForm({ ...form, fechaSalida: e.target.value })
+									}
+								/>
+							</div>
+
+							<div className="form-group">
+								<label htmlFor="vigilante-visita-estado">Estado</label>
+								<select
+									id="vigilante-visita-estado"
+									required
+									value={form.estadoId || "1"}
+									disabled
+									onChange={(e) =>
+										setForm({ ...form, estadoId: e.target.value })
+									}
+								>
+									{estados
+										.filter((x) => x.nombre.toLowerCase() === "pendiente" || String(x.id) === String(form.estadoId))
+										.map((x) => (
+											<option key={x.id} value={x.id}>
+												{x.nombre}
+											</option>
+										))}
+								</select>
 							</div>
 						</div>
 

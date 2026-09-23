@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
 import { apartamentosApi, torresApi } from "../../api";
+import { isValidInteger, onlyNumbers } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
@@ -30,6 +31,10 @@ export default function ApartamentosPage() {
 	const submit = async (e) => {
 		e.preventDefault();
 		setError("");
+		if (!isValidInteger(form.numeroApartamento) || !isValidInteger(form.piso)) {
+			setError("El número de apartamento y el piso solo pueden contener números.");
+			return;
+		}
 
 		try {
 			const p = {
@@ -202,9 +207,10 @@ function ApartmentForm({ form, setForm, submit, torres, error, edit }) {
 					<input
 						required
 						maxLength="10"
+						inputMode="numeric"
 						value={form.numeroApartamento}
 						onChange={(e) =>
-							setForm({ ...form, numeroApartamento: e.target.value })
+							setForm({ ...form, numeroApartamento: onlyNumbers(e.target.value) })
 						}
 					/>
 				</div>
@@ -215,7 +221,7 @@ function ApartmentForm({ form, setForm, submit, torres, error, edit }) {
 						type="number"
 						min="0"
 						value={form.piso}
-						onChange={(e) => setForm({ ...form, piso: e.target.value })}
+						onChange={(e) => setForm({ ...form, piso: onlyNumbers(e.target.value) })}
 					/>
 				</div>
 				<div className="form-group">

@@ -10,6 +10,7 @@ public class Apartamento {
     @Column(name = "id_apartamento") private Long id;
 
     @NotBlank(message="El número del apartamento es obligatorio")
+    @Pattern(regexp="\\d+",message="El número del apartamento solo puede contener números")
     @Size(max=10,message="Máximo 10 caracteres")
     @Column(name="numero_apartamento",nullable=false,length=10) private String numeroApartamento;
 

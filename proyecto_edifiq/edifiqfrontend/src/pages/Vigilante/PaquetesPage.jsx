@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import Modal from "../../componentes/Modal";
 import MultiCriteriaBar from "../../componentes/MultiCriteriaBar";
-import { paquetesApi, apartamentosApi, entregarPaquete } from "../../api";
-import { onlyLetters } from "../../utils/validation";
+import {
+	paquetesApi,
+	apartamentosApi,
+	entregarPaquete,
+	getPersonasDeApartamento,
+	getEstadosPaquete,
+} from "../../api";
+import { onlyLetters, toLocalDateTimeInput } from "../../utils/validation";
 import "../../styles/modules.css";
 
 const initial = {
 	descripcion: "",
 	remitente: "",
+	fechaRecepcion: "",
+	fechaEntrega: "",
+	estadoId: "1",
 	apartamentoId: "",
 };
 
@@ -18,12 +27,14 @@ const estaPendiente = (x) => x.estadoPaquete?.nombre?.toLowerCase() !== "entrega
 export default function VigilantePaquetesPage() {
 	const [items, setItems] = useState([]);
 	const [apts, setApts] = useState([]);
+	const [estados, setEstados] = useState([]);
 	const [form, setForm] = useState(initial);
 	const [open, setOpen] = useState(false);
 	const [error, setError] = useState("");
 	const [search, setSearch] = useState("");
 	const [soloPendientes, setSoloPendientes] = useState(true);
 	const [filters, setFilters] = useState({ torre: "", desde: "", hasta: "" });
+	const [entrega, setEntrega] = useState({ paquete: null, personas: [], personaId: "", fechaEntrega: "", observacion: "" });
 
 	const load = () =>
 		paquetesApi.list().then(setItems).catch((e) => setError(e.message));
@@ -31,6 +42,7 @@ export default function VigilantePaquetesPage() {
 	useEffect(() => {
 		load();
 		apartamentosApi.list().then(setApts);
+		getEstadosPaquete().then(setEstados);
 	}, []);
 
 	const submit = async (e) => {
@@ -41,8 +53,9 @@ export default function VigilantePaquetesPage() {
 			const p = {
 				descripcion: form.descripcion.trim(),
 				remitente: form.remitente.trim(),
-				fechaRecepcion: new Date().toISOString().slice(0, 19),
-				estadoPaquete: { id: 1 },
+				fechaRecepcion: form.fechaRecepcion,
+				fechaEntrega: form.fechaEntrega || null,
+				estadoPaquete: { id: Number(form.estadoId) },
 				apartamento: { id: Number(form.apartamentoId) },
 			};
 
@@ -56,9 +69,32 @@ export default function VigilantePaquetesPage() {
 		}
 	};
 
-	const entregar = async (id) => {
+	const abrirEntrega = async (paquete) => {
+		setError("");
 		try {
-			await entregarPaquete(id);
+			const relaciones = await getPersonasDeApartamento(paquete.apartamento.id);
+			setEntrega({
+				paquete,
+				personas: relaciones,
+				personaId: "",
+				fechaEntrega: toLocalDateTimeInput(),
+				observacion: "",
+			});
+		} catch (e) {
+			setError(e.message);
+		}
+	};
+
+	const entregar = async (e) => {
+		e.preventDefault();
+		setError("");
+		try {
+			await entregarPaquete(entrega.paquete.id, {
+				personaId: Number(entrega.personaId),
+				fechaEntrega: entrega.fechaEntrega,
+				observacion: entrega.observacion,
+			});
+			setEntrega({ paquete: null, personas: [], personaId: "", fechaEntrega: "", observacion: "" });
 			load();
 		} catch (e) {
 			setError(e.message);
@@ -89,7 +125,10 @@ export default function VigilantePaquetesPage() {
 				<button
 					className="primary-btn"
 					onClick={() => {
-						setForm(initial);
+						setForm({
+							...initial,
+							fechaRecepcion: toLocalDateTimeInput(),
+						});
 						setError("");
 						setOpen(true);
 					}}
@@ -130,6 +169,8 @@ export default function VigilantePaquetesPage() {
 								<th>Remitente</th>
 								<th>Apartamento</th>
 								<th>Recibido</th>
+								<th>Recibido por</th>
+								<th>Entregado</th>
 								<th>Estado</th>
 								<th>Acciones</th>
 							</tr>
@@ -144,6 +185,8 @@ export default function VigilantePaquetesPage() {
 											{x.apartamento?.torre?.nombreTorre} - {x.apartamento?.numeroApartamento}
 										</td>
 										<td>{fmt(x.fechaRecepcion)}</td>
+										<td>{x.personaEntrega ? `${x.personaEntrega.nombres} ${x.personaEntrega.apellidos}` : "—"}</td>
+										<td>{fmt(x.fechaEntrega)}</td>
 										<td>
 											<span
 												className={`badge ${
@@ -155,7 +198,7 @@ export default function VigilantePaquetesPage() {
 										</td>
 										<td className="actions-cell">
 											{estaPendiente(x) && (
-												<button className="small-btn" onClick={() => entregar(x.id)}>
+												<button className="small-btn" onClick={() => abrirEntrega(x)}>
 													Entregar
 												</button>
 											)}
@@ -164,7 +207,7 @@ export default function VigilantePaquetesPage() {
 								))
 							) : (
 								<tr>
-									<td colSpan="6" className="empty-row">
+									<td colSpan="8" className="empty-row">
 										No hay paquetes para mostrar.
 									</td>
 								</tr>
@@ -203,7 +246,7 @@ export default function VigilantePaquetesPage() {
 							</div>
 
 							<div className="form-group">
-								<label>Apartamento destino</label>
+								<label>Apartamento</label>
 								<select
 									required
 									value={form.apartamentoId}
@@ -219,11 +262,77 @@ export default function VigilantePaquetesPage() {
 									))}
 								</select>
 							</div>
+
+							<div className="form-group">
+								<label>Recepción</label>
+								<input
+									required
+									type="datetime-local"
+									value={form.fechaRecepcion}
+									onChange={(e) =>
+										setForm({ ...form, fechaRecepcion: e.target.value })
+									}
+								/>
+							</div>
+
+							<div className="form-group">
+								<label>Entrega</label>
+								<input
+									type="datetime-local"
+									value={form.fechaEntrega}
+									min={form.fechaRecepcion}
+									onChange={(e) =>
+										setForm({ ...form, fechaEntrega: e.target.value })
+									}
+								/>
+							</div>
+
+							<div className="form-group">
+								<label>Estado</label>
+								<select
+									required
+									value={form.estadoId}
+									onChange={(e) => setForm({ ...form, estadoId: e.target.value })}
+								>
+									{estados.map((s) => (
+										<option key={s.id} value={s.id}>
+											{s.nombre}
+										</option>
+									))}
+								</select>
+							</div>
 						</div>
 
 						<div className="form-footer">
 							<button className="primary-btn">Registrar paquete</button>
 						</div>
+					</form>
+				</Modal>
+			)}
+
+			{entrega.paquete && (
+				<Modal title="Registrar entrega" onClose={() => setEntrega({ ...entrega, paquete: null })}>
+					<form onSubmit={entregar}>
+						{error && <div className="form-error">{error}</div>}
+						<p>Paquete: <strong>{entrega.paquete.descripcion}</strong></p>
+						<div className="form-grid">
+							<div className="form-group">
+								<label>Persona que recibe</label>
+								<select required value={entrega.personaId} onChange={(e) => setEntrega({ ...entrega, personaId: e.target.value })}>
+									<option value="">Seleccione...</option>
+									{entrega.personas.map((relacion) => <option key={relacion.persona.id} value={relacion.persona.id}>{relacion.persona.nombres} {relacion.persona.apellidos} - {relacion.persona.numeroDocumento}</option>)}
+								</select>
+							</div>
+							<div className="form-group">
+								<label>Fecha y hora de entrega</label>
+								<input required type="datetime-local" min={entrega.paquete.fechaRecepcion?.slice(0, 16)} value={entrega.fechaEntrega} onChange={(e) => setEntrega({ ...entrega, fechaEntrega: e.target.value })} />
+							</div>
+							<div className="form-group full">
+								<label>Observación</label>
+								<textarea maxLength="250" value={entrega.observacion} onChange={(e) => setEntrega({ ...entrega, observacion: e.target.value })} />
+							</div>
+						</div>
+						<div className="form-footer"><button type="submit" className="primary-btn">Confirmar entrega</button></div>
 					</form>
 				</Modal>
 			)}

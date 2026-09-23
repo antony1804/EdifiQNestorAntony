@@ -9,12 +9,14 @@ public class Paquete {
  @NotBlank(message="El remitente es obligatorio") @Size(max=100) private String remitente;
  @NotNull(message="La fecha de recepción es obligatoria") @Column(name="fecha_recepcion",nullable=false) private LocalDateTime fechaRecepcion;
  @Column(name="fecha_entrega") private LocalDateTime fechaEntrega;
+ @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_persona_entrega") private Persona personaEntrega;
+ @Size(max=250, message="La observación no puede superar 250 caracteres") @Column(name="observacion_entrega") private String observacionEntrega;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_estado_paquete",nullable=false) private EstadoPaquete estadoPaquete;
  @ManyToOne(fetch=FetchType.EAGER) @JoinColumn(name="id_apartamento",nullable=false) private Apartamento apartamento;
  @Column(name="fecha_creacion",updatable=false,insertable=false) private LocalDateTime fechaCreacion;
  @Column(name="fecha_actualizacion",insertable=false) private LocalDateTime fechaActualizacion;
  public Long getId(){return id;} public void setId(Long v){id=v;} public String getDescripcion(){return descripcion;} public void setDescripcion(String v){descripcion=v;}
  public String getRemitente(){return remitente;} public void setRemitente(String v){remitente=v;} public LocalDateTime getFechaRecepcion(){return fechaRecepcion;} public void setFechaRecepcion(LocalDateTime v){fechaRecepcion=v;}
- public LocalDateTime getFechaEntrega(){return fechaEntrega;} public void setFechaEntrega(LocalDateTime v){fechaEntrega=v;} public EstadoPaquete getEstadoPaquete(){return estadoPaquete;} public void setEstadoPaquete(EstadoPaquete v){estadoPaquete=v;}
+ public LocalDateTime getFechaEntrega(){return fechaEntrega;} public void setFechaEntrega(LocalDateTime v){fechaEntrega=v;} public Persona getPersonaEntrega(){return personaEntrega;} public void setPersonaEntrega(Persona v){personaEntrega=v;} public String getObservacionEntrega(){return observacionEntrega;} public void setObservacionEntrega(String v){observacionEntrega=v;} public EstadoPaquete getEstadoPaquete(){return estadoPaquete;} public void setEstadoPaquete(EstadoPaquete v){estadoPaquete=v;}
  public Apartamento getApartamento(){return apartamento;} public void setApartamento(Apartamento v){apartamento=v;} public LocalDateTime getFechaCreacion(){return fechaCreacion;} public LocalDateTime getFechaActualizacion(){return fechaActualizacion;}
 }

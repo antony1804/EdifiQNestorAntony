@@ -5,6 +5,16 @@ export const onlyNumbers = (value) => value.replace(/\D/g, "");
 
 export const onlyDecimal = (value) => value.replace(/[^0-9.]/g, "");
 
+export const toLocalDateTimeInput = (date = new Date()) => {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+export const isValidInteger = (value, min = 0) => {
+    const text = normalizeText(value);
+    return /^\d+$/.test(text) && Number(text) >= min;
+};
+
 export const normalizeText = (value = "") => String(value ?? "").trim();
 
 export const isRequiredText = (value, min = 1) =>
